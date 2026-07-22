@@ -3,6 +3,8 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { insertSubmissionLog } from "@/lib/server/activity-log";
 
 // POST /api/submissions — create a new submission
+// NOTE: `submissions.team_id` is TEXT NOT NULL UNIQUE (confirmed against the live
+// DB) — there is no separate team_name column. Store the selected slot as-is.
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) ?? {};
   const isDraft = typeof body?.isDraft === "boolean" ? body.isDraft : true;
@@ -16,6 +18,7 @@ export async function POST(req: NextRequest) {
       description:         body.description,
       pitch:               body.pitch,
       tech_stack:          body.techStack ?? [],
+      uses_microsoft_foundry: body.usesMicrosoftFoundry ?? false,
       thumbnail_url:       body.thumbnailUrl ?? null,
       github_repo_url:       body.githubRepoUrl,
       live_demo_url:         body.liveDemoUrl || null,
@@ -30,10 +33,10 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    // team_id unique violation — team already submitted
+    // team_id unique violation — that slot is already taken.
     if (error.code === "23505") {
       return NextResponse.json(
-        { error: "A submission for this Team ID already exists. Use your edit link to update it." },
+        { error: "This Team ID is already taken. If you already submitted, use your edit link to update it." },
         { status: 409 }
       );
     }

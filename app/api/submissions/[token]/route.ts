@@ -38,6 +38,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       description:         body.description,
       pitch:               body.pitch,
       tech_stack:          body.techStack ?? [],
+      uses_microsoft_foundry: body.usesMicrosoftFoundry ?? false,
       thumbnail_url:       body.thumbnailUrl ?? null,
       github_repo_url:       body.githubRepoUrl,
       live_demo_url:         body.liveDemoUrl || null,
@@ -51,6 +52,14 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     .eq("edit_token", token)
     .select("id, edit_token")
     .single();
+
+  // team_id unique violation — the newly-chosen slot is taken by another team.
+  if (error?.code === "23505") {
+    return NextResponse.json(
+      { error: "This Team ID is already taken by another team. Please pick a different one." },
+      { status: 409 }
+    );
+  }
 
   if (error || !data) {
     return NextResponse.json({ error: "Submission not found or update failed" }, { status: 404 });
@@ -75,6 +84,7 @@ function dbToForm(row: SubmissionRow): Submission {
     description:      row.description,
     pitch:            row.pitch,
     techStack:        row.tech_stack,
+    usesMicrosoftFoundry: row.uses_microsoft_foundry ?? false,
     thumbnailUrl:     row.thumbnail_url,
     githubRepoUrl:      row.github_repo_url,
     liveDemoUrl:        row.live_demo_url ?? "",
