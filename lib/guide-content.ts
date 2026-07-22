@@ -65,8 +65,8 @@ export const GUIDE_SUBMISSION = {
 
 export const GUIDE_JUDGING = {
   schedule: {
-    when: "Sat 25 Jul · 1:00–4:00 PM",
-    where: "A.1.20",
+    when: "Sat 25 Jul · 1:00–3:30 PM",
+    where: "B.5.12/13 & B.2.07/08",
   },
   format: [
     "5 minutes pitch — use a live demo if possible",
@@ -103,6 +103,10 @@ export const GUIDE_JUDGING = {
 } as const;
 
 export const GUIDE_VOTING = {
+  schedule: {
+    when: "Sat 25 Jul · 3:30–4:30 PM",
+    where: "B.5.12/13 & B.2.07/08",
+  },
   points: [
     {
       label: "Who",
@@ -124,22 +128,9 @@ export const GUIDE_NFC_TIP =
   "Your NFC lanyard opens this participant guide. You can rewrite the card later (e.g. LinkedIn). Save this page URL first so you can always get back during the hackathon.";
 
 export const GUIDE_NFC_REWRITE_STEPS = [
-  {
-    platform: "iPhone",
-    steps: [
-      "Open Shortcuts → Automation (or a free NFC writer app from the App Store).",
-      "Scan your lanyard tag and choose Write / Encode.",
-      "Paste your new URL (e.g. LinkedIn) and save. Your old HackX link is gone once overwritten.",
-    ],
-  },
-  {
-    platform: "Android",
-    steps: [
-      "Install a free NFC Tools / TagWriter app from Play Store.",
-      "Tap Write → URL / URI and paste your new link.",
-      "Hold the phone to the lanyard until it confirms. Save this guide URL elsewhere first.",
-    ],
-  },
+  "Download NFC Tools (by wakdev) from the App Store or Play Store.",
+  "Open the app → Write → Add a record → URL / URI, paste your new link (e.g. LinkedIn), then confirm.",
+  "Tap Write, then hold your phone to the lanyard until it confirms. Save this guide URL elsewhere first — your old HackX link is gone once overwritten.",
 ] as const;
 
 /** Sticky section nav — label + section id must stay in sync with GuideSectionShell ids. */
@@ -148,7 +139,7 @@ export const GUIDE_NAV_ITEMS = [
   { label: "Credits", id: "credits" },
   { label: "Mentors", id: "mentoring" },
   { label: "Game", id: "game" },
-  { label: "Judging", id: "judging" },
+  { label: "Pitching", id: "judging" },
   { label: "Voting", id: "voting" },
 ] as const;
 
@@ -245,7 +236,7 @@ export const GUIDE_MENTORING = {
         { time: "13:08 – 13:16", teamId: 12, teamName: "Blue Nova", track: "Friction To Flow" },
         { time: "13:16 – 13:24", teamId: 29, teamName: "SRS", track: "Friction To Flow" },
         { time: "13:24 – 13:32", teamId: 3, teamName: "Group 3", track: "Care Forward" },
-        { time: "13:32 – 13:40", teamId: 24, teamName: "Agent Oreo", track: "Friction To Flow" },
+        { time: "13:32 – 13:40", teamId: 24, teamName: "Agent Oreo", track: "Care Forward" },
         { time: "13:40 – 13:48", teamId: 15, teamName: "谢谢", track: "Friction To Flow" },
         { time: "13:48 – 13:56", teamId: 8, teamName: "BlankOut", track: "Friction To Flow" },
         { time: "13:56 – 14:04", teamId: 26, teamName: "SOS", track: "Care Forward" },
