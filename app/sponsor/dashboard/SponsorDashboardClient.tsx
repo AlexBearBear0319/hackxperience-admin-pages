@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpDown, LogOut, Menu, Search, X } from "lucide-react";
+import ScrollToTopButton from "@/app/components/ui/scroll-to-top-button";
 import {
   C,
   FM,
@@ -970,6 +971,10 @@ export default function SponsorDashboardClient() {
           </div>
         )}
         </div>
+      </div>
+
+      <div className="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-50">
+        <ScrollToTopButton />
       </div>
     </div>
   );
