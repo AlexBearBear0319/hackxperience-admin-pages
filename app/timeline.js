@@ -13,7 +13,7 @@ const DAY_SCHEDULES = [
       { time: '10:30 – 11:30', activity: 'Opening ceremony @ A.1.20' },
       { time: '11:30 – 12:00', activity: 'Grab your lunch → move to hacking rooms' },
       { time: '12:00 – 22:00', activity: 'Hacking @ B.5.12/13 & B.2.07/08', highlight: true },
-      { time: '13:00 – 15:00', activity: 'Group mentoring @ SR B.4.08 & SR B.4.07' },
+      { time: '13:00 – 16:00', activity: 'Group mentoring @ SR B.4.08 & SR B.4.07' },
       { time: '18:00', activity: 'Dinner' },
       { time: '18:00 – 22:00', activity: 'Fringe game – Prompt Relay @ SR B.4.07' },
       { time: '22:00', activity: 'End of Day 1' },
