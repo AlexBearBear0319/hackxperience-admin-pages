@@ -76,6 +76,7 @@ export interface SubmissionRow {
   description: string;
   pitch: string;
   tech_stack: string[];
+  uses_microsoft_foundry?: boolean | null;
   thumbnail_url: string | null;
   github_repo_url: string;
   live_demo_url: string | null;
@@ -108,6 +109,7 @@ export interface Submission {
   description: string;
   pitch: string;
   techStack: string[];
+  usesMicrosoftFoundry: boolean;
   thumbnailUrl: string | null;
   // Assets
   githubRepoUrl: string;

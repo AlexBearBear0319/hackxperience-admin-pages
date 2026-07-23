@@ -1,44 +1,37 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { RevealItem, RevealStagger } from './components/ui/motion-ui'
 import { motion } from 'framer-motion'
 
-const EVENTS = [
+/** Day-of schedule — compact tables for participants. */
+const DAY_SCHEDULES = [
   {
-    date: '16 JUL 2026',
-    title: 'REGISTRATION DEADLINE',
-    time: '11:59 PM',
-    meta: 'SGT · TEAM REGISTRATION FORM',
-    endsAt: '2026-07-16T23:59:59+08:00',
+    day: 'DAY 1',
+    date: 'Fri 24 Jul',
+    rows: [
+      { time: '09:30 – 10:30', activity: 'Registration @ A.1.20 + merch' },
+      { time: '10:30 – 11:30', activity: 'Opening ceremony @ A.1.20' },
+      { time: '11:30 – 12:00', activity: 'Grab your lunch → move to hacking rooms' },
+      { time: '12:00 – 22:00', activity: 'Hacking @ B.5.12/13 & B.2.07/08', highlight: true },
+      { time: '13:00 – 15:00', activity: 'Group mentoring @ SR B.4.08 & SR B.4.07' },
+      { time: '18:00', activity: 'Dinner' },
+      { time: '18:00 – 22:00', activity: 'Fringe game – Prompt Relay @ SR B.4.07' },
+      { time: '22:00', activity: 'End of Day 1' },
+    ],
   },
   {
-    date: '24 JUL 2026',
-    title: 'OPENING CEREMONY',
-    time: '10:30 AM - 11:30 AM',
-    meta: 'SIM CAMPUS · A.1.20',
-    endsAt: '2026-07-24T11:30:00+08:00',
-  },
-  {
-    date: '24–25 JUL 2026',
-    title: 'HACKING PERIOD',
-    time: '12:00 PM (24 JUL) - 12:00 PM (25 JUL)',
-    meta: 'SIM CAMPUS · B.5.12/13 & B.2.07/08',
-    endsAt: '2026-07-25T12:00:00+08:00',
-  },
-  {
-    date: '25 JUL 2026',
-    title: 'SUBMISSION DEADLINE',
-    time: '12:00 PM',
-    meta: 'SGT · PROJECT PORTAL',
-    endsAt: '2026-07-25T12:00:00+08:00',
-  },
-  {
-    date: '25 JUL 2026',
-    title: 'JUDGING + WINNERS',
-    time: '1:00 PM - 6:00 PM',
-    meta: 'SIM CAMPUS',
-    endsAt: '2026-07-25T18:00:00+08:00',
+    day: 'DAY 2',
+    date: 'Sat 25 Jul',
+    rows: [
+      { time: '09:00 – 10:00', activity: 'Check-in' },
+      { time: '10:00 – 12:00', activity: 'Hacking continues' },
+      { time: '12:00', activity: 'Submission deadline — strict', highlight: true },
+      { time: '12:00 – 13:00', activity: 'Lunch (buffet)' },
+      { time: '13:00 – 15:30', activity: 'Pitching to Judges' },
+      { time: '15:30 – 16:30', activity: 'Project Showcase + Voting' },
+      { time: '16:30 – 17:30', activity: 'Entrepreneurship workshop @ A.1.20' },
+      { time: '17:30 – 18:00', activity: 'Closing + winner announcement + group photo' },
+    ],
   },
 ]
 
@@ -158,131 +151,50 @@ function ActionButton({ href, children }) {
   )
 }
 
-function parseDateTime(dateStr, timeStr) {
-  const monthMap = {
-    JAN: '01',
-    FEB: '02',
-    MAR: '03',
-    APR: '04',
-    MAY: '05',
-    JUN: '06',
-    JUL: '07',
-    AUG: '08',
-    SEP: '09',
-    OCT: '10',
-    NOV: '11',
-    DEC: '12',
-  }
-
-  const [day, mon, year] = dateStr.split(' ')
-  const [startTime, rawEnd] = timeStr.split(' - ')
-  const endTime = rawEnd || startTime
-
-  function convert(t) {
-    let [time, modifier] = t.split(' ')
-    let [hours, minutes] = time.split(':')
-
-    if (modifier === 'PM' && hours !== '12') hours = String(+hours + 12)
-    if (modifier === 'AM' && hours === '12') hours = '00'
-
-    return `${year}${monthMap[mon]}${day.padStart(2, '0')}T${hours.padStart(
-      2,
-      '0'
-    )}${minutes}00`
-  }
-
-  return {
-    start: convert(startTime),
-    end: convert(endTime),
-  }
-}
-
-function buildGoogleCalendarLink({ title, date, time, meta }) {
-  if (!time || !date || date === 'DATES_PENDING' || date.includes('–')) return '#'
-
-  const { start, end } = parseDateTime(date, time)
-
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-    title
-  )}&dates=${start}/${end}&location=${encodeURIComponent(meta)}`
-}
-
-function useNow() {
-  const [now, setNow] = useState(null)
-  useEffect(() => {
-    setNow(Date.now())
-  }, [])
-  return now
-}
-
-function isEnded(endsAt, now) {
-  if (!endsAt || now == null) return false
-  return now >= new Date(endsAt).getTime()
-}
-
-function TimelineItem({ date, title, time, meta, isLast, isPassed, isNext }) {
-  const isPending = date === 'DATES_PENDING' || date.includes('–')
-
-  const calendarLink = !isPending && !isPassed
-    ? buildGoogleCalendarLink({ title, date, time, meta })
-    : null
-
-  const markerClass = isPassed ? 'bg-gray-600' : isNext ? 'bg-red-600' : 'bg-red-700'
-  const lineClass = isPassed ? 'bg-gray-700' : 'bg-red-700'
-
+function DaySchedule({ day, date, rows }) {
   return (
-    <RevealItem>
-    <motion.div
-      className={`flex gap-4 sm:gap-8 ${isPassed ? 'opacity-45' : ''}`}
-      whileHover={isPassed ? undefined : { x: 4 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-    >
-      <div className="flex flex-col items-center w-4 flex-shrink-0">
-        <div
-          className={`w-3.5 ${markerClass}`}
-          style={{
-            height: 18,
-            clipPath: 'polygon(50% 0%, 100% 35%, 100% 100%, 0% 100%, 0% 35%)',
-          }}
-        />
-        {!isLast && <div className={`w-0.5 ${lineClass} flex-1 min-h-12`} />}
+    <div className="min-w-0">
+      <div className="flex items-baseline justify-between gap-3 mb-2 pb-2 border-b border-white">
+        <h3 className="text-xl sm:text-2xl font-black tracking-tight text-red-600 leading-none">
+          {day}
+        </h3>
+        <span className="text-xs sm:text-sm text-gray-300 tracking-wide whitespace-nowrap">
+          {date}
+        </span>
       </div>
 
-      <div className="flex-1 pb-8 sm:pb-10 pt-0.5">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-          <div className="text-red-500 text-xs tracking-widest font-mono mb-1.5">{date}</div>
-          {isPassed && (
-            <span className="text-[10px] sm:text-xs tracking-widest font-mono text-gray-500 mb-1.5">
-              // CLOSED
-            </span>
-          )}
-          {!isPassed && isNext && (
-            <span className="text-[10px] sm:text-xs tracking-widest font-mono text-red-500 mb-1.5">
-              // UP NEXT
-            </span>
-          )}
-        </div>
-
-        <div className={`text-base sm:text-xl font-bold tracking-wider font-mono mb-1.5 ${isPassed ? 'text-gray-500' : 'text-white'}`}>
-          {title}
-        </div>
-
-        {time && <Meta>{time} // {meta}</Meta>}
-        {!time && meta && <Meta>{meta}</Meta>}
-
-        {!isPending && !isPassed && calendarLink && calendarLink !== '#' && (
-          <div className="mt-4">
-            <ActionButton href={calendarLink}>
-              <span className="flex items-center gap-2">
-                <img src="/google_calendar.svg" className="w-4 h-4" alt="" />
-                SET_REMINDER
-              </span>
-            </ActionButton>
-          </div>
-        )}
+      <div>
+        {rows.map((row, i) => {
+          const highlight = Boolean(row.highlight)
+          return (
+            <div
+              key={`${row.time}-${i}`}
+              className="grid grid-cols-[7.25rem_1fr] sm:grid-cols-[8.5rem_1fr] gap-x-3 sm:gap-x-4 items-start py-2 border-b border-gray-800 last:border-b-0"
+              style={
+                highlight
+                  ? { backgroundColor: 'rgba(192, 0, 0, 0.14)' }
+                  : undefined
+              }
+            >
+              <div
+                className={`text-[11px] sm:text-xs font-bold tracking-wide leading-snug pl-2 sm:pl-2.5 ${
+                  highlight ? 'text-red-500' : 'text-white'
+                }`}
+              >
+                {row.time}
+              </div>
+              <div
+                className={`text-[11px] sm:text-xs leading-snug pr-2 sm:pr-2.5 ${
+                  highlight ? 'text-white font-semibold' : 'text-gray-300'
+                }`}
+              >
+                {row.activity}
+              </div>
+            </div>
+          )
+        })}
       </div>
-    </motion.div>
-    </RevealItem>
+    </div>
   )
 }
 
@@ -412,29 +324,26 @@ function SupportedByRow() {
 }
 
 export default function TimeLine() {
-  const now = useNow()
   const gold   = SPONSORS.filter(s => s.tier === 'gold')
   const silver = SPONSORS.filter(s => s.tier === 'silver')
   const bronze = SPONSORS.filter(s => s.tier === 'bronze')
-  const nextIndex = now == null ? -1 : EVENTS.findIndex((event) => !isEnded(event.endsAt, now))
 
   return (
     <section id="timeline" className="bg-[#1a1a1a] px-6 md:px-12 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-12 font-mono scroll-mt-11">
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           title="HACKATHON_TIMELINE"
-          subtitle="// 24–25 JULY 2026 · SIM CAMPUS · FULL SCHEDULE DROPS ONCE LOCKED IN."
+          subtitle="// 24–25 JULY 2026 · SIM CAMPUS · FULL DAY-OF SCHEDULE"
         />
 
-        <RevealStagger className="flex flex-col" stagger={0.07}>
-          {EVENTS.map((event, i) => (
-            <TimelineItem
-              key={i}
-              {...event}
-              isLast={i === EVENTS.length - 1}
-              isPassed={isEnded(event.endsAt, now)}
-              isNext={nextIndex >= 0 && i === nextIndex}
-            />
+        <RevealStagger
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-14 sm:mb-16"
+          stagger={0.08}
+        >
+          {DAY_SCHEDULES.map((schedule) => (
+            <RevealItem key={schedule.day}>
+              <DaySchedule {...schedule} />
+            </RevealItem>
           ))}
         </RevealStagger>
 
@@ -442,7 +351,7 @@ export default function TimeLine() {
           <div id="judges">
             <SectionHeader title="JUDGES_AND_MENTORS" subtitle="// INDUSTRY EXPERTS EVALUATING AND GUIDING YOUR WORK" />
             <RevealStagger className="flex flex-col" stagger={0.1}>
-              {JUDGES.map((judge, i) => (
+              {JUDGES.map((judge) => (
                 <JudgeRow key={judge.name} {...judge} isLast={false} />
               ))}
               {MENTORS.map((mentor, i) => (
