@@ -3,20 +3,26 @@ import { requireRole } from "@/lib/auth/route-guard";
 import { verifyRoleMapping } from "@/lib/auth/role-mapping";
 import { supabaseServer } from "@/lib/supabase-server";
 import type { SubmissionRow, TeamMember } from "@/lib/types";
+import { totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
 import {
   compareJudgeAvgDesc,
   isSponsorAward,
   isUuid,
   rankSponsorScores,
+  rankTrackPlaces,
   roamCriterionForAward,
   type SponsorAward,
   type SponsorScoreRow,
+  type TrackPlace,
 } from "@/lib/server/sponsor-awards";
 
 type JudgeCriterionRow = {
   submission_id: string;
   entrepreneurship: number | null;
   technical_execution: number | null;
+  problem_solution_fit: number | null;
+  innovation_creativity: number | null;
+  presentation_quality: number | null;
 };
 
 function memberCount(members: unknown): number {
@@ -37,7 +43,24 @@ function averageCriterion(
     .filter((value): value is number => typeof value === "number");
   if (values.length === 0) return null;
   const sum = values.reduce((acc, n) => acc + n, 0);
-  return Math.round((sum / values.length) * 100) / 100;
+  return sum / values.length;
+}
+
+/** Scale criterion average onto 0–100 using the admin settings max for that criterion. */
+function normalizeToHundred(avg: number | null, maxPoints: number): number | null {
+  if (avg == null || maxPoints <= 0) return null;
+  const scaled = (avg / maxPoints) * 100;
+  return Math.round(scaled * 10) / 10;
+}
+
+/** Average of each judge's weighted overall total (criteria already capped at settings weights). */
+function averageOverallJudgeScore(rows: JudgeCriterionRow[]): number | null {
+  const totals = rows
+    .map((row) => totalScore(row as JudgeScoreRow))
+    .filter((value): value is number => typeof value === "number");
+  if (totals.length === 0) return null;
+  const sum = totals.reduce((acc, n) => acc + n, 0);
+  return Math.round((sum / totals.length) * 100) / 100;
 }
 
 export async function GET(request: NextRequest) {
@@ -67,30 +90,36 @@ export async function GET(request: NextRequest) {
   const award: SponsorAward = awardParam;
   const criterion = roamCriterionForAward(award);
 
-  let submissionsQuery = supabaseServer
-    .from("submissions")
-    .select("*")
-    .eq("status", "APPROVED")
-    .order("submitted_at", { ascending: false });
-
-  if (award === "microsoft_foundry") {
-    submissionsQuery = submissionsQuery.eq("uses_microsoft_foundry", true);
-  }
-
-  const [submissionsResult, scoresResult, sponsorScoresResult] = await Promise.all([
-    submissionsQuery,
+  // Always load all APPROVED projects so track 1st/2nd is global (not award-filtered).
+  const [allSubmissionsResult, scoresResult, sponsorScoresResult, settingsResult] = await Promise.all([
+    supabaseServer
+      .from("submissions")
+      .select("*")
+      .eq("status", "APPROVED")
+      .order("submitted_at", { ascending: false }),
     supabaseServer
       .from("judges_scores")
-      .select("submission_id,entrepreneurship,technical_execution"),
+      .select(
+        "submission_id,entrepreneurship,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality",
+      ),
     supabaseServer
       .from("sponsor_scores")
       .select("submission_id,award,score,private_comment,updated_at")
       .eq("sponsor_id", sponsorId)
       .eq("award", award),
+    supabaseServer
+      .from("settings")
+      .select("entrepreneurship_value,technical_execution_value")
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle<{
+        entrepreneurship_value: number | null;
+        technical_execution_value: number | null;
+      }>(),
   ]);
 
-  if (submissionsResult.error) {
-    return NextResponse.json({ error: submissionsResult.error.message }, { status: 500 });
+  if (allSubmissionsResult.error) {
+    return NextResponse.json({ error: allSubmissionsResult.error.message }, { status: 500 });
   }
   if (scoresResult.error) {
     return NextResponse.json({ error: scoresResult.error.message }, { status: 500 });
@@ -98,8 +127,16 @@ export async function GET(request: NextRequest) {
   if (sponsorScoresResult.error) {
     return NextResponse.json({ error: sponsorScoresResult.error.message }, { status: 500 });
   }
+  if (settingsResult.error) {
+    return NextResponse.json({ error: settingsResult.error.message }, { status: 500 });
+  }
 
-  const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
+  const criterionMax =
+    criterion === "entrepreneurship"
+      ? Math.max(0, Math.round(settingsResult.data?.entrepreneurship_value ?? 10))
+      : Math.max(0, Math.round(settingsResult.data?.technical_execution_value ?? 20));
+
+  const allSubmissions = (allSubmissionsResult.data ?? []) as SubmissionRow[];
   const judgeRows = (scoresResult.data ?? []) as JudgeCriterionRow[];
   const sponsorRows = (sponsorScoresResult.data ?? []) as SponsorScoreRow[];
 
@@ -110,6 +147,28 @@ export async function GET(request: NextRequest) {
     list.push(row);
     judgeRowsBySubmission.set(row.submission_id, list);
   }
+
+  const overallBySubmission = new Map<string, number | null>();
+  for (const row of allSubmissions) {
+    overallBySubmission.set(
+      row.id,
+      averageOverallJudgeScore(judgeRowsBySubmission.get(row.id) ?? []),
+    );
+  }
+
+  const trackPlaces = rankTrackPlaces(
+    allSubmissions.map((row) => ({
+      id: row.id,
+      track: row.track?.trim() || "Open Innovation",
+      projectName: row.project_name,
+      overallJudgeAvg: overallBySubmission.get(row.id) ?? null,
+    })),
+  );
+
+  const submissions =
+    award === "microsoft_foundry"
+      ? allSubmissions.filter((row) => Boolean(row.uses_microsoft_foundry))
+      : allSubmissions;
 
   const sponsorBySubmission = new Map(
     sponsorRows.map((row) => [row.submission_id, row] as const),
@@ -125,6 +184,8 @@ export async function GET(request: NextRequest) {
     thumbnailUrl: string | null;
     usesMicrosoftFoundry: boolean;
     judgeAvg: number | null;
+    overallJudgeAvg: number | null;
+    trackPlace: TrackPlace | null;
     roamRank: number;
     sponsorScore: number | null;
     sponsorComment: string | null;
@@ -143,7 +204,12 @@ export async function GET(request: NextRequest) {
         memberCount: memberCount(row.members),
         thumbnailUrl: row.thumbnail_url,
         usesMicrosoftFoundry: Boolean(row.uses_microsoft_foundry),
-        judgeAvg: averageCriterion(judgeRowsBySubmission.get(row.id) ?? [], criterion),
+        judgeAvg: normalizeToHundred(
+          averageCriterion(judgeRowsBySubmission.get(row.id) ?? [], criterion),
+          criterionMax,
+        ),
+        overallJudgeAvg: overallBySubmission.get(row.id) ?? null,
+        trackPlace: trackPlaces.get(row.id) ?? null,
         roamRank: 0,
         sponsorScore: typeof sponsor?.score === "number" ? sponsor.score : null,
         sponsorComment: sponsor?.private_comment ?? null,
@@ -171,6 +237,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     award,
     roamCriterion: criterion,
+    criterionMax,
     projects,
     scoredCount: sponsorRows.length,
     totalCount: projects.length,

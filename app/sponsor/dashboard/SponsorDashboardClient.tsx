@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, LogOut, Menu, Search, X } from "lucide-react";
+import { ArrowUpDown, Eye, EyeOff, LogOut, Menu, Search, Trophy, X } from "lucide-react";
 import ScrollToTopButton from "@/app/components/ui/scroll-to-top-button";
 import {
   C,
@@ -25,6 +25,8 @@ type SponsorProject = {
   thumbnailUrl: string | null;
   usesMicrosoftFoundry: boolean;
   judgeAvg: number | null;
+  overallJudgeAvg: number | null;
+  trackPlace: 1 | 2 | null;
   roamRank: number;
   sponsorScore: number | null;
   sponsorComment: string | null;
@@ -74,6 +76,73 @@ function isScoreInvalid(value: string): boolean {
 
 function judgeLabel(award: SponsorAward) {
   return award === "entrepreneurial" ? "Entrep" : "Technical";
+}
+
+function TrackPlaceBadge({ place, track }: { place: 1 | 2; track: string }) {
+  const isWinner = place === 1;
+  const trackShort = track.length > 18 ? `${track.slice(0, 16)}…` : track;
+  return (
+    <span
+      title={`${isWinner ? "Track winner" : "Track runner-up"} · ${track} (overall judges avg)`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        height: 26,
+        padding: "0 10px",
+        borderRadius: 999,
+        background: isWinner ? C.gold : C.silver,
+        color: C.text,
+        border: `1.5px solid ${C.borderStrong}`,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.02em",
+        textTransform: "uppercase",
+      }}
+    >
+      <Trophy size={12} aria-hidden />
+      {isWinner ? "1st" : "2nd"} · {trackShort}
+    </span>
+  );
+}
+
+function trackTone(track: string): "care" | "friction" | "other" {
+  const normalized = track.trim().toLowerCase();
+  if (normalized.includes("care")) return "care";
+  if (normalized.includes("friction")) return "friction";
+  return "other";
+}
+
+function TrackPill({ track }: { track: string }) {
+  const tone = trackTone(track);
+  const label =
+    tone === "care" ? "Care" : tone === "friction" ? "Friction" : track.trim() || "Track";
+  const bg = tone === "care" ? C.redSoft : tone === "friction" ? C.azureSoft : C.cardAlt;
+  const color = tone === "care" ? C.red : tone === "friction" ? C.azure : C.text;
+  const border =
+    tone === "care" ? C.red : tone === "friction" ? C.azure : C.borderStrong;
+
+  return (
+    <span
+      title={track}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        height: 26,
+        padding: "0 10px",
+        borderRadius: 999,
+        background: bg,
+        color,
+        border: `1.5px solid ${border}`,
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.02em",
+        textTransform: "uppercase",
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -162,6 +231,7 @@ export default function SponsorDashboardClient() {
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [revealTrackWinners, setRevealTrackWinners] = useState(false);
   const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const awardRef = useRef(award);
   awardRef.current = award;
@@ -202,7 +272,15 @@ export default function SponsorDashboardClient() {
           return;
         }
 
-        const list = Array.isArray(activePayload.projects) ? activePayload.projects : [];
+        const list = (Array.isArray(activePayload.projects) ? activePayload.projects : []).map(
+          (project) => ({
+            ...project,
+            overallJudgeAvg:
+              typeof project.overallJudgeAvg === "number" ? project.overallJudgeAvg : null,
+            trackPlace:
+              project.trackPlace === 1 || project.trackPlace === 2 ? project.trackPlace : null,
+          }),
+        );
         setProjects(list);
         setWinner(activePayload.winner ?? null);
         setCounts({
@@ -541,7 +619,40 @@ export default function SponsorDashboardClient() {
               <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, color: C.red }}>Sponsor</div>
             </div>
 
-            <div style={{ padding: 16, marginTop: "auto" }}>
+            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
+              <button
+                type="button"
+                onClick={() => setRevealTrackWinners((prev) => !prev)}
+                aria-pressed={revealTrackWinners}
+                style={{
+                  width: "100%",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 48,
+                  padding: "0 16px",
+                  border: `1.5px solid ${revealTrackWinners ? C.red : C.borderStrong}`,
+                  borderRadius: 0,
+                  background: revealTrackWinners ? C.redSoft : C.white,
+                  color: C.text,
+                  fontFamily: FM,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.03em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                {revealTrackWinners ? (
+                  <EyeOff size={16} aria-hidden="true" />
+                ) : (
+                  <Eye size={16} aria-hidden="true" />
+                )}
+                <span>{revealTrackWinners ? "Hide tracks winner" : "Reveal tracks winner"}</span>
+              </button>
+
               <button
                 type="button"
                 className="sp-logout-btn"
@@ -863,6 +974,9 @@ export default function SponsorDashboardClient() {
                           #1 BY YOU
                         </span>
                       )}
+                      {revealTrackWinners && project.trackPlace != null && (
+                        <TrackPlaceBadge place={project.trackPlace} track={project.track} />
+                      )}
                     </div>
 
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
@@ -879,8 +993,9 @@ export default function SponsorDashboardClient() {
                           fontWeight: 700,
                         }}
                       >
-                        TEAM_ID: {project.teamId}
+                        {project.projectName} ({project.teamId})
                       </span>
+                      <TrackPill track={project.track} />
                       {project.usesMicrosoftFoundry && (
                         <span
                           style={{

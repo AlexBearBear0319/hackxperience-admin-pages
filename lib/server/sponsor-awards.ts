@@ -68,3 +68,43 @@ export function compareJudgeAvgDesc(
   if (b.judgeAvg !== a.judgeAvg) return b.judgeAvg - a.judgeAvg;
   return a.projectName.localeCompare(b.projectName);
 }
+
+export type TrackPlace = 1 | 2;
+
+/**
+ * Per-track winner (1) and runner-up (2) from overall weighted judge averages.
+ * Only submissions with a numeric overall avg are considered. Ties break by
+ * project name, then id, so places are unique and deterministic.
+ */
+export function rankTrackPlaces(
+  projects: Array<{
+    id: string;
+    track: string;
+    projectName: string;
+    overallJudgeAvg: number | null;
+  }>,
+): Map<string, TrackPlace> {
+  const byTrack = new Map<string, typeof projects>();
+  for (const project of projects) {
+    if (project.overallJudgeAvg == null) continue;
+    const track = project.track.trim() || "Open Innovation";
+    const list = byTrack.get(track) ?? [];
+    list.push(project);
+    byTrack.set(track, list);
+  }
+
+  const places = new Map<string, TrackPlace>();
+  for (const list of byTrack.values()) {
+    const sorted = [...list].sort((a, b) => {
+      const aAvg = a.overallJudgeAvg!;
+      const bAvg = b.overallJudgeAvg!;
+      if (bAvg !== aAvg) return bAvg - aAvg;
+      const byName = a.projectName.localeCompare(b.projectName);
+      if (byName !== 0) return byName;
+      return a.id.localeCompare(b.id);
+    });
+    if (sorted[0]) places.set(sorted[0].id, 1);
+    if (sorted[1]) places.set(sorted[1].id, 2);
+  }
+  return places;
+}
