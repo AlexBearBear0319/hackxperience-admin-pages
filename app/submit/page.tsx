@@ -51,12 +51,13 @@ interface Member {
 
 interface FormState {
   projectName: string;
-  teamId: string;
+  teamId: string;             // pre-assigned team slot, e.g. "TEAM_07" → team_id (TEXT, the only team column)
   track: string;
   description: string;
   pitch: string;
   techStack: string[];
   otherTechStack: string;
+  usesMicrosoftFoundry: boolean;
   githubRepoUrl: string;
   liveDemoUrl: string;
   pitchDeckShareUrl: string;
@@ -104,6 +105,8 @@ function deserializeForm(stored: SerializableForm): FormState {
     pitchDeckUploadUrl: (s.pitchDeckUploadUrl  ?? s.pitchDeckFileUrl ?? null) as string | null,
     demoVideoUrl:       (s.demoVideoUrl        ?? "") as string,
     otherTechStack:     (s.otherTechStack      ?? "") as string,
+    teamId:             (s.teamId != null ? String(s.teamId) : "") as string,
+    usesMicrosoftFoundry: Boolean(s.usesMicrosoftFoundry ?? false),
     members: ((stored.members ?? []) as Member[]).map((m) => ({
       id:         m.id         ?? Date.now().toString(),
       name:       m.name       ?? "",
@@ -176,6 +179,11 @@ function isValidUrl(url: string): boolean {
   try { new URL(url); return true; } catch { return false; }
 }
 
+// Strict-enough email format check: single @, non-empty local part, dotted domain.
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
 function validateStep(step: number, form: FormState, maxTeamSize: number): boolean {
   switch (step) {
     case 0: {
@@ -183,9 +191,9 @@ function validateStep(step: number, form: FormState, maxTeamSize: number): boole
       const pitchWords = form.pitch.trim() ? form.pitch.trim().split(/\s+/).length : 0;
       const otherTechValid = !form.techStack.includes("OTHER") || !!form.otherTechStack.trim();
       return !!(
-        form.projectName.trim() && 
-        form.teamId.trim() && 
-        form.track && 
+        form.projectName.trim() &&
+        form.teamId.trim() &&
+        form.track &&
         form.description.trim() && 
         descWords <= 6 &&
         form.pitch.trim() &&
@@ -195,11 +203,12 @@ function validateStep(step: number, form: FormState, maxTeamSize: number): boole
         (form.thumbnailFile || form.thumbnailUrl)
       );
     }
-    case 1: return isValidUrl(form.githubRepoUrl) && 
-                   isValidUrl(form.pitchDeckShareUrl) && 
-                   isValidUrl(form.liveDemoUrl) && 
+    case 1: return isValidUrl(form.githubRepoUrl) &&
+                   isValidUrl(form.pitchDeckShareUrl) &&
+                   // Live Demo URL is optional — valid when blank, or a real URL when provided.
+                   (!form.liveDemoUrl.trim() || isValidUrl(form.liveDemoUrl)) &&
                    isValidUrl(form.demoVideoUrl);
-    case 2: return form.members.length > 0 && form.members.length <= maxTeamSize && form.members.every(m => m.name?.trim() && m.university?.trim() && m.role?.trim() && m.email?.trim());
+    case 2: return form.members.length > 0 && form.members.length <= maxTeamSize && form.members.every(m => m.name?.trim() && m.university?.trim() && m.role?.trim() && isValidEmail(m.email ?? ""));
     default: return true;
   }
 }
@@ -679,6 +688,9 @@ function CheckMsg({ status, takenMsg }: { status: CheckStatus | undefined; taken
 
 const TECH_TAGS = ["REACT", "NEXT.JS", "TAILWIND", "NODE.JS", "PYTHON", "OPENAI API", "SUPABASE", "FIREBASE", "VERCEL", "GITHUB", "OTHER"];
 const TRACKS = [...HACKX_SUBMISSION_TRACKS];
+// Pre-assigned team slots — the submissions table has a single team_id TEXT column,
+// so this dropdown writes "TEAM_01".."TEAM_29" directly (no separate name column).
+const TEAM_IDS = Array.from({ length: 29 }, (_, i) => `TEAM_${String(i + 1).padStart(2, "0")}`);
 const UNIVERSITIES = ['NUS', 'NTU', 'SMU', 'SUTD', 'SIT', 'SUSS', 'SIM', 'Kaplan', 'PSB Academy', 'MDIS', 'James Cook University', 'Curtin Singapore', 'Other'];
 
 function Step01({
@@ -772,15 +784,19 @@ function Step01({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 18 }}>
           <div>
-            <FieldLabel required>Team Name</FieldLabel>
-            <SInput
-              value={form.teamId}
-              onChange={(v) => { setForm({ ...form, teamId: v }); clearCheck("teamId"); }}
-              onBlur={() => void checkField("teamId", "team_id", form.teamId)}
-              placeholder="e.g. TEAM_07"
-              hasError={fieldChecks.teamId === "taken"}
-            />
-            <CheckMsg status={fieldChecks.teamId} takenMsg="TEAM_ID ALREADY SUBMITTED — USE YOUR EDIT LINK TO UPDATE" />
+            <FieldLabel required hint="YOUR PRE-ASSIGNED TEAM SLOT">Team ID</FieldLabel>
+            <div style={{ position: "relative", boxShadow: SHADOW_SM }}>
+              <select
+                value={form.teamId}
+                onChange={(e) => { setForm({ ...form, teamId: e.target.value }); clearCheck("teamId"); void checkField("teamId", "team_id", e.target.value); }}
+                style={{ width: "100%", height: 44, background: "#fff", border: `1.5px solid ${fieldChecks.teamId === "taken" ? RED : DARK_BG}`, padding: "0 36px 0 14px", fontFamily: FM, fontSize: 13, color: form.teamId ? DARK_BG : MUTED, appearance: "none", outline: "none", cursor: "pointer", boxSizing: "border-box" }}
+              >
+                <option value="">Select team ID…</option>
+                {TEAM_IDS.map(id => <option key={id} value={id}>{id}</option>)}
+              </select>
+              <Mono color={MUTED} size={12} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>▾</Mono>
+            </div>
+            <CheckMsg status={fieldChecks.teamId} takenMsg="TEAM ID ALREADY SUBMITTED — USE YOUR EDIT LINK TO UPDATE" />
           </div>
           <div>
             <FieldLabel required>Track</FieldLabel>
@@ -983,6 +999,35 @@ function Step01({
               />
             </div>
           )}
+        </div>
+        <div>
+          <FieldLabel hint="AZURE AI FOUNDRY / AI STUDIO">Uses Microsoft AI Foundry?</FieldLabel>
+          <div style={{ display: "flex", gap: 10 }}>
+            {([["YES", true], ["NO", false]] as [string, boolean][]).map(([label, val]) => {
+              const active = form.usesMicrosoftFoundry === val;
+              return (
+                <motion.button
+                  key={label}
+                  type="button"
+                  onClick={() => setForm({ ...form, usesMicrosoftFoundry: val })}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 18 }}
+                  style={{
+                    minWidth: 92, height: 42, padding: "0 20px",
+                    border: `1.5px solid ${DARK_BG}`,
+                    background: active ? RED : "#fff",
+                    color: active ? "#fff" : DARK_BG,
+                    fontFamily: FM, fontSize: 12, fontWeight: 800, letterSpacing: "0.14em",
+                    textTransform: "uppercase", cursor: "pointer",
+                    boxShadow: active ? SHADOW_SM : "none",
+                  }}
+                >
+                  [ {label} ]
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={
@@ -1301,6 +1346,9 @@ function Step03({
   return (
     <>
       <StepHeader n="03" title="TEAM_MANIFEST" status={`Add all team members — min 1, max ${maxTeamSize} · Currently ${form.members.length}`} />
+      <Mono color="#555555" size={10.5} weight={600} style={{ display: "block", marginBottom: 16, lineHeight: 1.6, whiteSpace: "normal" }}>
+        // LIST ALL TEAM MEMBERS. ONLY REGISTERED MEMBERS ARE ELIGIBLE TO PARTICIPATE IN VOTING AND ENTER THE LUCKY DRAW.
+      </Mono>
       {/* Horizontal-scroll wrapper — keeps the member table's column layout intact on narrow screens */}
       <div style={{ overflowX: "auto" }}>
         <div style={{ minWidth: 560 }}>
@@ -1334,16 +1382,25 @@ function Step03({
                 <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontFamily: FM, fontSize: 10, color: MUTED, pointerEvents: "none" }}>▾</span>
               </div>
               <input value={m.role} onChange={(e) => updateMember(m.id, "role", e.target.value)} placeholder="Lead / Dev…" style={memberInputStyle} />
-              <div>
-                <input
-                  value={m.email}
-                  onChange={(e) => { updateMember(m.id, "email", e.target.value); clearCheck(`member:${m.id}`); }}
-                  onBlur={() => void checkField(`member:${m.id}`, "member_email", m.email)}
-                  placeholder="name@mail.sim.edu"
-                  style={{ ...memberInputStyle, borderColor: fieldChecks[`member:${m.id}`] === "taken" ? RED : DARK_BG }}
-                />
-                <CheckMsg status={fieldChecks[`member:${m.id}`]} takenMsg="EMAIL ALREADY REGISTERED" />
-              </div>
+              {(() => {
+                const emailInvalid = !!m.email.trim() && !isValidEmail(m.email);
+                return (
+                  <div>
+                    <input
+                      value={m.email}
+                      onChange={(e) => { updateMember(m.id, "email", e.target.value); clearCheck(`member:${m.id}`); }}
+                      onBlur={() => void checkField(`member:${m.id}`, "member_email", m.email)}
+                      placeholder="name@mail.sim.edu"
+                      style={{ ...memberInputStyle, borderColor: emailInvalid || fieldChecks[`member:${m.id}`] === "taken" ? RED : DARK_BG }}
+                    />
+                    {emailInvalid ? (
+                      <span className="block mt-1 text-xs font-mono font-bold text-[#CC0000]">&gt;&gt; [ERR: INVALID EMAIL FORMAT]</span>
+                    ) : (
+                      <CheckMsg status={fieldChecks[`member:${m.id}`]} takenMsg="EMAIL ALREADY REGISTERED" />
+                    )}
+                  </div>
+                );
+              })()}
               <motion.button
                 onClick={() => removeMember(m.id)}
                 whileHover={{ background: RED, color: "#fff", borderColor: RED }}
@@ -1420,7 +1477,7 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
       <div style={{ maxHeight: 480, overflow: "auto", paddingRight: 4 }}>
         <RBlock n="01" title="PROJECT_IDENTITY">
           <RRow label="Project" value={form.projectName} />
-          <RRow label="Team Name" value={form.teamId} mono />
+          <RRow label="Team ID" value={form.teamId} mono />
           <RRow label="Track" value={form.track} />
           <RRow label="Description" value={form.description} />
           <RRow label="Pitch" value={form.pitch} />
@@ -1428,6 +1485,19 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
             ...form.techStack.filter(t => t !== "OTHER"),
             ...form.otherTechStack.split(",").map(t => t.trim().toUpperCase()).filter(Boolean),
           ].filter((t, i, arr) => arr.indexOf(t) === i).join(" · ")} mono />
+          <RRow label="MS AI Foundry" value={form.usesMicrosoftFoundry ? "YES" : "NO"} mono />
+          <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, padding: "9px 0", alignItems: "start" }}>
+            <Mono color={MUTED} size={10} weight={700}>// Thumbnail</Mono>
+            <div style={{ border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW_SM, background: OFF_WHITE, maxWidth: 300, overflow: "hidden" }}>
+              {form.thumbnailFile || form.thumbnailUrl ? (
+                <ThumbnailPreview file={form.thumbnailFile} url={form.thumbnailUrl} />
+              ) : (
+                <div style={{ aspectRatio: "16 / 9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Mono color={MUTED} size={10}>// No thumbnail uploaded</Mono>
+                </div>
+              )}
+            </div>
+          </div>
         </RBlock>
 
         <RBlock n="02" title="ASSETS">
@@ -1861,7 +1931,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isSubmissi
 
 const INITIAL_FORM: FormState = {
   projectName: "", teamId: "", track: "", description: "", pitch: "",
-  techStack: [], otherTechStack: "", githubRepoUrl: "", liveDemoUrl: "", pitchDeckShareUrl: "",
+  techStack: [], otherTechStack: "", usesMicrosoftFoundry: false, githubRepoUrl: "", liveDemoUrl: "", pitchDeckShareUrl: "",
   pitchDeckFile: null, pitchDeckUploadUrl: null, demoVideoUrl: "",
   thumbnailFile: null, thumbnailUrl: null,
   members: [{ id: "initial", name: "", university: "", role: "", email: "" }],
