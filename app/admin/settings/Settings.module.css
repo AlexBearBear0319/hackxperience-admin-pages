@@ -783,6 +783,106 @@
   color: #fef9f1;
 }
 
+/* ── Delete track confirmation modal ──────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  position: relative;
+  width: min(507px, 100%);
+  background: #fef9f1;
+  border: 1px solid #cc0000;
+  box-shadow: 8px 8px 0 0 #cc0000;
+  padding: 28px 28px 24px;
+}
+
+.modalAccent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #cc0000;
+}
+
+.modalTitle {
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 24px;
+  line-height: 31px;
+  color: #cc0000;
+  margin: 0 0 6px;
+  font-weight: 400;
+}
+
+.modalWarning {
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  color: #7a7669;
+  margin: 0 0 16px;
+  font-weight: 400;
+}
+
+.modalBody {
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 13px;
+  line-height: 17px;
+  color: #1d1c17;
+  margin: 0 0 24px;
+  font-weight: 400;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 18px;
+}
+
+.modalYes,
+.modalNo {
+  flex: 1;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  border: 1px solid;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.modalYes {
+  background: #cc0000;
+  border-color: #cc0000;
+  color: #fef9f1;
+}
+
+.modalYes:hover {
+  background: #aa0000;
+  border-color: #aa0000;
+}
+
+.modalNo {
+  background: #f2ede5;
+  border-color: #1d1c17;
+  color: #1d1c17;
+}
+
+.modalNo:hover {
+  background: #ddd6c8;
+  border-color: #d0c8bc;
+}
+
 .customTrackBadge {
   display: inline-block;
   font-size: 9px;
