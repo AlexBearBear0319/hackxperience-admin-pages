@@ -6,6 +6,13 @@ import type { SubmissionRow } from "@/lib/types";
 import { totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
 import { isUuid, rankTrackPlaces, type TrackPlace } from "@/lib/server/sponsor-awards";
 
+type CriterionKey =
+  | "technical_execution"
+  | "problem_solution_fit"
+  | "innovation_creativity"
+  | "presentation_quality"
+  | "entrepreneurship";
+
 type JudgeCriterionRow = {
   submission_id: string;
   entrepreneurship: number | null;
@@ -23,6 +30,37 @@ type SettingsMaxima = {
   entrepreneurship_value: number | null;
 };
 
+type CriterionAverages = {
+  technical: number | null;
+  problem: number | null;
+  innovation: number | null;
+  presentation: number | null;
+  entrepreneurship: number | null;
+};
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function averageCriterion(rows: JudgeCriterionRow[], key: CriterionKey): number | null {
+  const values = rows
+    .map((row) => row[key])
+    .filter((value): value is number => typeof value === "number");
+  if (values.length === 0) return null;
+  const sum = values.reduce((acc, n) => acc + n, 0);
+  return round2(sum / values.length);
+}
+
+function averageCriteria(rows: JudgeCriterionRow[]): CriterionAverages {
+  return {
+    technical: averageCriterion(rows, "technical_execution"),
+    problem: averageCriterion(rows, "problem_solution_fit"),
+    innovation: averageCriterion(rows, "innovation_creativity"),
+    presentation: averageCriterion(rows, "presentation_quality"),
+    entrepreneurship: averageCriterion(rows, "entrepreneurship"),
+  };
+}
+
 /** Average of each judge's weighted overall total (criteria already capped at settings weights). */
 function averageOverallJudgeScore(rows: JudgeCriterionRow[]): {
   avg: number | null;
@@ -34,20 +72,29 @@ function averageOverallJudgeScore(rows: JudgeCriterionRow[]): {
   if (totals.length === 0) return { avg: null, judgeCount: 0 };
   const sum = totals.reduce((acc, n) => acc + n, 0);
   return {
-    avg: Math.round((sum / totals.length) * 100) / 100,
+    avg: round2(sum / totals.length),
     judgeCount: totals.length,
   };
 }
 
-function overallMaxima(settings: SettingsMaxima | null): number {
-  const parts = [
-    settings?.technical_execution_value ?? 20,
-    settings?.problem_solution_fit_value ?? 20,
-    settings?.innovation_creativity_value ?? 30,
-    settings?.presentation_quality_value ?? 20,
-    settings?.entrepreneurship_value ?? 10,
-  ].map((n) => Math.max(0, Math.round(n)));
-  return parts.reduce((acc, n) => acc + n, 0);
+function parseMax(value: number | null | undefined, fallback: number): number {
+  return Math.max(0, Math.round(typeof value === "number" ? value : fallback));
+}
+
+function buildMaxima(settings: SettingsMaxima | null) {
+  const technical = parseMax(settings?.technical_execution_value, 20);
+  const problem = parseMax(settings?.problem_solution_fit_value, 20);
+  const innovation = parseMax(settings?.innovation_creativity_value, 30);
+  const presentation = parseMax(settings?.presentation_quality_value, 20);
+  const entrepreneurship = parseMax(settings?.entrepreneurship_value, 10);
+  return {
+    technical,
+    problem,
+    innovation,
+    presentation,
+    entrepreneurship,
+    overall: technical + problem + innovation + presentation + entrepreneurship,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -113,6 +160,7 @@ export async function GET(request: NextRequest) {
     projectName: string;
     teamId: string;
     track: string;
+    criteria: CriterionAverages;
     overallJudgeAvg: number | null;
     judgeCount: number;
     trackPlace: TrackPlace | null;
@@ -131,14 +179,14 @@ export async function GET(request: NextRequest) {
 
   const projects: ProjectRow[] = submissions
     .map((row) => {
-      const { avg, judgeCount } = averageOverallJudgeScore(
-        judgeRowsBySubmission.get(row.id) ?? [],
-      );
+      const rows = judgeRowsBySubmission.get(row.id) ?? [];
+      const { avg, judgeCount } = averageOverallJudgeScore(rows);
       return {
         id: row.id,
         projectName: row.project_name,
         teamId: String(row.team_id),
         track: row.track?.trim() || "Open Innovation",
+        criteria: averageCriteria(rows),
         overallJudgeAvg: avg,
         judgeCount,
         trackPlace: trackPlaces.get(row.id) ?? null,
@@ -158,7 +206,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     projects,
-    maxima: { overall: overallMaxima(settingsResult.data ?? null) },
+    maxima: buildMaxima(settingsResult.data ?? null),
     session: {
       username: auth.session.username,
       role: auth.session.role,

@@ -13,11 +13,29 @@ import {
   SHADOW_DARK,
 } from "../dashboard/constants";
 
+type CriterionAverages = {
+  technical: number | null;
+  problem: number | null;
+  innovation: number | null;
+  presentation: number | null;
+  entrepreneurship: number | null;
+};
+
+type ScoreMaxima = {
+  technical: number;
+  problem: number;
+  innovation: number;
+  presentation: number;
+  entrepreneurship: number;
+  overall: number;
+};
+
 type JudgeScoreProject = {
   id: string;
   projectName: string;
   teamId: string;
   track: string;
+  criteria: CriterionAverages;
   overallJudgeAvg: number | null;
   judgeCount: number;
   trackPlace: 1 | 2 | null;
@@ -25,10 +43,36 @@ type JudgeScoreProject = {
 
 type JudgeScoresResponse = {
   projects: JudgeScoreProject[];
-  maxima: { overall: number };
+  maxima: ScoreMaxima;
   session: { username: string; role: string };
   error?: string;
 };
+
+const DEFAULT_MAXIMA: ScoreMaxima = {
+  technical: 20,
+  problem: 20,
+  innovation: 30,
+  presentation: 20,
+  entrepreneurship: 10,
+  overall: 100,
+};
+
+function fmtAvg(value: number | null, max: number): string {
+  return value != null ? `${value}/${max}` : "—";
+}
+
+function normalizeCriteria(raw: unknown): CriterionAverages {
+  const row = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const num = (key: string) =>
+    typeof row[key] === "number" ? (row[key] as number) : null;
+  return {
+    technical: num("technical"),
+    problem: num("problem"),
+    innovation: num("innovation"),
+    presentation: num("presentation"),
+    entrepreneurship: num("entrepreneurship"),
+  };
+}
 
 const PAGE_CSS = `
   .sp-scores-table { width: 100%; border-collapse: collapse; }
@@ -66,7 +110,7 @@ const PAGE_CSS = `
 
   @media (max-width: 720px) {
     .sp-scores-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .sp-scores-table { min-width: 640px; }
+    .sp-scores-table { min-width: 980px; }
     .sp-scores-body { padding: 14px !important; }
   }
 `;
@@ -144,7 +188,7 @@ function TrackPlaceMark({ place }: { place: 1 | 2 }) {
 export default function SponsorJudgeScoresClient() {
   const router = useRouter();
   const [projects, setProjects] = useState<JudgeScoreProject[]>([]);
-  const [overallMax, setOverallMax] = useState(100);
+  const [maxima, setMaxima] = useState<ScoreMaxima>(DEFAULT_MAXIMA);
   const [sessionUser, setSessionUser] = useState("sponsor");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -164,12 +208,33 @@ export default function SponsorJudgeScoresClient() {
         }
         return;
       }
-      setProjects(Array.isArray(payload.projects) ? payload.projects : []);
-      setOverallMax(
-        typeof payload.maxima?.overall === "number" && payload.maxima.overall > 0
-          ? payload.maxima.overall
-          : 100,
+      const list = Array.isArray(payload.projects) ? payload.projects : [];
+      setProjects(
+        list.map((project) => ({
+          ...project,
+          criteria: normalizeCriteria(project.criteria),
+          overallJudgeAvg:
+            typeof project.overallJudgeAvg === "number" ? project.overallJudgeAvg : null,
+          judgeCount: typeof project.judgeCount === "number" ? project.judgeCount : 0,
+          trackPlace:
+            project.trackPlace === 1 || project.trackPlace === 2 ? project.trackPlace : null,
+        })),
       );
+      const m = payload.maxima;
+      setMaxima({
+        technical:
+          typeof m?.technical === "number" ? m.technical : DEFAULT_MAXIMA.technical,
+        problem: typeof m?.problem === "number" ? m.problem : DEFAULT_MAXIMA.problem,
+        innovation:
+          typeof m?.innovation === "number" ? m.innovation : DEFAULT_MAXIMA.innovation,
+        presentation:
+          typeof m?.presentation === "number" ? m.presentation : DEFAULT_MAXIMA.presentation,
+        entrepreneurship:
+          typeof m?.entrepreneurship === "number"
+            ? m.entrepreneurship
+            : DEFAULT_MAXIMA.entrepreneurship,
+        overall: typeof m?.overall === "number" && m.overall > 0 ? m.overall : DEFAULT_MAXIMA.overall,
+      });
       if (typeof payload.session?.username === "string" && payload.session.username) {
         setSessionUser(payload.session.username);
       }
@@ -421,7 +486,7 @@ export default function SponsorJudgeScoresClient() {
             JUDGE SCORES
           </h1>
           <p style={{ fontFamily: FM, fontSize: 12, color: C.muted, margin: "8px 0 0", letterSpacing: "0.04em" }}>
-            // OVERALL AVERAGE PER PROJECT (OUT OF {overallMax})
+            // CRITERION AVERAGES + OVERALL (OUT OF {maxima.overall})
           </p>
         </div>
 
@@ -501,10 +566,15 @@ export default function SponsorJudgeScoresClient() {
               <table className="sp-scores-table">
                 <thead>
                   <tr>
-                    <th style={{ width: 48 }}>#</th>
+                    <th style={{ width: 40 }}>#</th>
                     <th>Project</th>
                     <th>Team ID</th>
                     <th>Track</th>
+                    <th className="sp-scores-num" title="Technical Execution">Tech</th>
+                    <th className="sp-scores-num" title="Problem-Solution Fit">Problem</th>
+                    <th className="sp-scores-num" title="Innovation & Creativity">Innov</th>
+                    <th className="sp-scores-num" title="Presentation Quality">Present</th>
+                    <th className="sp-scores-num" title="Entrepreneurship">Entrep</th>
                     <th className="sp-scores-num">Overall</th>
                     <th className="sp-scores-num">Judges</th>
                   </tr>
@@ -523,10 +593,23 @@ export default function SponsorJudgeScoresClient() {
                       <td>
                         <TrackPill track={project.track} />
                       </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.technical, maxima.technical)}
+                      </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.problem, maxima.problem)}
+                      </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.innovation, maxima.innovation)}
+                      </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.presentation, maxima.presentation)}
+                      </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.entrepreneurship, maxima.entrepreneurship)}
+                      </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 14 }}>
-                        {project.overallJudgeAvg != null
-                          ? `${project.overallJudgeAvg}/${overallMax}`
-                          : "—"}
+                        {fmtAvg(project.overallJudgeAvg, maxima.overall)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, color: C.muted }}>
                         {project.judgeCount > 0 ? project.judgeCount : "—"}
