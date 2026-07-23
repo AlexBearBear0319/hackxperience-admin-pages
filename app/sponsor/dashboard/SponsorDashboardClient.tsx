@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,8 +9,8 @@ import {
   C,
   FM,
   FB,
-  CARD_SHADOW,
-  CARD_SHADOW_ACTIVE,
+  SHADOW,
+  SHADOW_DARK,
   RESPONSIVE_CSS,
 } from "./constants";
 
@@ -88,19 +89,20 @@ function TrackPlaceBadge({ place, track }: { place: 1 | 2; track: string }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 5,
-        height: 26,
-        padding: "0 10px",
-        borderRadius: 999,
+        height: 22,
+        padding: "0 8px",
+        borderRadius: 0,
         background: isWinner ? C.gold : C.silver,
         color: C.text,
         border: `1.5px solid ${C.borderStrong}`,
-        fontSize: 11,
+        fontFamily: FM,
+        fontSize: 10,
         fontWeight: 700,
-        letterSpacing: "0.02em",
+        letterSpacing: "0.06em",
         textTransform: "uppercase",
       }}
     >
-      <Trophy size={12} aria-hidden />
+      <Trophy size={11} aria-hidden />
       {isWinner ? "1st" : "2nd"} · {trackShort}
     </span>
   );
@@ -118,7 +120,7 @@ function TrackPill({ track }: { track: string }) {
   const label =
     tone === "care" ? "Care" : tone === "friction" ? "Friction" : track.trim() || "Track";
   const bg = tone === "care" ? C.redSoft : tone === "friction" ? C.azureSoft : C.cardAlt;
-  const color = tone === "care" ? C.red : tone === "friction" ? C.azure : C.text;
+  const color = tone === "care" ? C.red : tone === "friction" ? C.azure : C.muted;
   const border =
     tone === "care" ? C.red : tone === "friction" ? C.azure : C.borderStrong;
 
@@ -128,15 +130,16 @@ function TrackPill({ track }: { track: string }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        height: 26,
-        padding: "0 10px",
-        borderRadius: 999,
+        height: 22,
+        padding: "0 8px",
+        borderRadius: 0,
         background: bg,
         color,
         border: `1.5px solid ${border}`,
-        fontSize: 11,
+        fontFamily: FM,
+        fontSize: 10,
         fontWeight: 700,
-        letterSpacing: "0.02em",
+        letterSpacing: "0.08em",
         textTransform: "uppercase",
       }}
     >
@@ -147,24 +150,26 @@ function TrackPill({ track }: { track: string }) {
 
 function RankBadge({ rank }: { rank: number }) {
   const isTop3 = rank >= 1 && rank <= 3;
-  const tone = rank === 1 ? C.gold : rank === 2 ? C.silver : rank === 3 ? C.bronze : C.border;
+  const tone = rank === 1 ? C.gold : rank === 2 ? C.silver : rank === 3 ? C.bronze : C.card;
   return (
     <div
       aria-label={`Rank ${rank}`}
       style={{
-        width: 44,
-        height: 44,
+        width: 42,
+        height: 42,
         flexShrink: 0,
-        borderRadius: "50%",
-        background: isTop3 ? tone : C.cardAlt,
-        border: isTop3 ? `2px solid ${tone}` : `2px solid ${C.borderStrong}`,
+        borderRadius: 0,
+        background: tone,
+        border: `2px solid ${C.borderStrong}`,
+        boxShadow: isTop3 ? SHADOW_DARK : "none",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontFamily: FM,
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 700,
         color: C.text,
+        letterSpacing: "0.02em",
       }}
     >
       #{rank}
@@ -180,8 +185,8 @@ function TeamThumbnail({ url, alt }: { url: string | null; alt: string }) {
         width: 88,
         height: 66,
         flexShrink: 0,
-        borderRadius: 10,
-        border: `1.5px solid ${C.borderStrong}`,
+        borderRadius: 0,
+        border: `2px solid ${C.borderStrong}`,
         background: C.cardAlt,
         overflow: "hidden",
         position: "relative",
@@ -495,8 +500,8 @@ export default function SponsorDashboardClient() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "14px 24px",
-          borderBottom: `1px solid ${C.border}`,
+          padding: "12px 24px",
+          borderBottom: `2px solid ${C.borderStrong}`,
           background: C.card,
           position: "sticky",
           top: 0,
@@ -506,23 +511,29 @@ export default function SponsorDashboardClient() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
+              width: 36,
+              height: 36,
+              borderRadius: 0,
               background: C.red,
               color: C.white,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontFamily: FB,
-              fontSize: 22,
+              fontSize: 20,
               letterSpacing: "0.02em",
+              boxShadow: SHADOW_DARK,
             }}
           >
             S
           </div>
-          <div style={{ fontFamily: FB, fontSize: 22, letterSpacing: "0.02em", lineHeight: 1 }}>
-            HACK<span style={{ color: C.red }}>X</span>SPONSOR
+          <div>
+            <div style={{ fontFamily: FB, fontSize: 24, letterSpacing: "0.02em", lineHeight: 1 }}>
+              HACK<span style={{ color: C.red }}>X</span>SPONSOR
+            </div>
+            <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginTop: 2 }}>
+              // SPONSOR PORTAL
+            </div>
           </div>
         </div>
 
@@ -533,19 +544,19 @@ export default function SponsorDashboardClient() {
           aria-label="Open menu"
           aria-expanded={menuOpen}
           style={{
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            border: `1.5px solid ${C.borderStrong}`,
-            borderRadius: 10,
+            border: `2px solid ${C.borderStrong}`,
+            borderRadius: 0,
             background: C.white,
             color: C.text,
             cursor: "pointer",
           }}
         >
-          <Menu size={22} aria-hidden />
+          <Menu size={20} aria-hidden />
         </button>
       </header>
 
@@ -578,7 +589,7 @@ export default function SponsorDashboardClient() {
               zIndex: 61,
               display: "flex",
               flexDirection: "column",
-              boxShadow: CARD_SHADOW_ACTIVE,
+              boxShadow: SHADOW,
             }}
           >
             <div
@@ -587,7 +598,7 @@ export default function SponsorDashboardClient() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "14px 16px",
-                borderBottom: `1px solid ${C.border}`,
+                borderBottom: `2px solid ${C.borderStrong}`,
               }}
             >
               <span style={{ fontFamily: FB, fontSize: 22, letterSpacing: "0.02em" }}>
@@ -603,7 +614,8 @@ export default function SponsorDashboardClient() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: `1.5px solid ${C.red}`,
+                  border: `2px solid ${C.red}`,
+                  borderRadius: 0,
                   background: "transparent",
                   color: C.red,
                   cursor: "pointer",
@@ -613,10 +625,14 @@ export default function SponsorDashboardClient() {
               </button>
             </div>
 
-            <div style={{ padding: "18px 16px", borderBottom: `1px solid ${C.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Signed in as</div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>{sessionUser}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, color: C.red }}>Sponsor</div>
+            <div style={{ padding: "18px 16px", borderBottom: `1.5px solid ${C.border}` }}>
+              <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, letterSpacing: "0.08em", marginBottom: 6 }}>
+                // SIGNED IN AS
+              </div>
+              <div style={{ fontFamily: FM, fontSize: 16, fontWeight: 700 }}>{sessionUser}</div>
+              <div style={{ fontFamily: FM, fontSize: 11, fontWeight: 700, marginTop: 4, color: C.red, letterSpacing: "0.06em" }}>
+                // SPONSOR
+              </div>
             </div>
 
             <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
@@ -632,17 +648,18 @@ export default function SponsorDashboardClient() {
                   gap: 8,
                   minHeight: 48,
                   padding: "0 16px",
-                  border: `1.5px solid ${revealTrackWinners ? C.red : C.borderStrong}`,
+                  border: `2px solid ${revealTrackWinners ? C.red : C.borderStrong}`,
                   borderRadius: 0,
                   background: revealTrackWinners ? C.redSoft : C.white,
                   color: C.text,
                   fontFamily: FM,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 700,
-                  letterSpacing: "0.03em",
+                  letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   cursor: "pointer",
                   textAlign: "center",
+                  boxShadow: revealTrackWinners ? SHADOW : SHADOW_DARK,
                 }}
               >
                 {revealTrackWinners ? (
@@ -668,16 +685,17 @@ export default function SponsorDashboardClient() {
                   gap: 8,
                   minHeight: 48,
                   padding: "0 16px",
-                  border: `1.5px solid ${C.red}`,
+                  border: `2px solid ${C.red}`,
                   borderRadius: 0,
                   background: C.bg,
                   color: C.red,
                   fontFamily: FM,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 700,
-                  letterSpacing: "0.04em",
+                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   cursor: "pointer",
+                  boxShadow: SHADOW,
                 }}
               >
                 <LogOut size={16} aria-hidden="true" />
@@ -704,7 +722,6 @@ export default function SponsorDashboardClient() {
               const active = award === item.key;
               const c = counts[item.key];
               const isFirst = index === 0;
-              const isLast = index === AWARDS.length - 1;
               return (
                 <button
                   key={item.key}
@@ -723,32 +740,20 @@ export default function SponsorDashboardClient() {
                   style={{
                     flex: 1,
                     textAlign: "left",
-                    minHeight: 78,
-                    padding: "14px 18px",
-                    borderRadius: isFirst
-                      ? "14px 0 0 0"
-                      : isLast
-                        ? "0 14px 0 0"
-                        : 0,
-                    borderTop: active ? `2px solid ${C.red}` : `2px solid ${C.border}`,
-                    borderLeft: active
-                      ? `2px solid ${C.red}`
-                      : isFirst
-                        ? `2px solid ${C.border}`
-                        : `1px solid ${C.border}`,
-                    borderRight: active
-                      ? `2px solid ${C.red}`
-                      : isLast
-                        ? `2px solid ${C.border}`
-                        : "none",
-                    borderBottom: active ? `2px solid ${C.card}` : `2px solid ${C.border}`,
+                    minHeight: 72,
+                    padding: "12px 16px",
+                    borderRadius: 0,
+                    border: active ? `2px solid ${C.red}` : `2px solid ${C.borderStrong}`,
+                    borderBottom: active ? `2px solid ${C.card}` : `2px solid ${C.borderStrong}`,
                     marginBottom: active ? -2 : 0,
-                    background: active ? C.card : "#ebe6dc",
+                    marginRight: isFirst ? -2 : 0,
+                    background: active ? C.card : C.bg,
                     color: C.text,
-                    boxShadow: active ? "none" : "inset 0 -2px 0 rgba(29,28,23,0.06)",
+                    boxShadow: active ? "none" : SHADOW_DARK,
                     cursor: "pointer",
                     fontFamily: FM,
                     position: "relative",
+                    zIndex: active ? 3 : 1,
                   }}
                 >
                   {active && (
@@ -761,19 +766,35 @@ export default function SponsorDashboardClient() {
                         right: 0,
                         height: 4,
                         background: C.red,
-                        borderRadius: isFirst
-                          ? "12px 0 0 0"
-                          : isLast
-                            ? "0 12px 0 0"
-                            : 0,
                       }}
                     />
                   )}
-                  <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.25, color: active ? C.red : C.text }}>
+                  <div
+                    className="sp-award-tab-title"
+                    style={{
+                      fontFamily: FM,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      lineHeight: 1.3,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      color: active ? C.red : C.text,
+                    }}
+                  >
                     {item.label}
                   </div>
-                  <div style={{ marginTop: 8, fontSize: 14, fontWeight: 700 }}>
-                    {c.scored} / {c.total} scored
+                  <div
+                    className="sp-award-tab-meta"
+                    style={{
+                      marginTop: 8,
+                      fontFamily: FM,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: C.muted,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    // {c.scored}/{c.total} SCORED
                   </div>
                 </button>
               );
@@ -790,8 +811,8 @@ export default function SponsorDashboardClient() {
           style={{
             background: C.card,
             border: `2px solid ${C.red}`,
-            borderRadius: "0 0 14px 14px",
-            boxShadow: CARD_SHADOW_ACTIVE,
+            borderRadius: 0,
+            boxShadow: SHADOW,
             padding: "18px 18px 20px",
             position: "relative",
             zIndex: 1,
@@ -802,21 +823,21 @@ export default function SponsorDashboardClient() {
           className="sp-filters"
           style={{
             display: "flex",
-            gap: 20,
+            gap: 16,
             alignItems: "center",
             marginBottom: 18,
           }}
         >
           <div className="sp-search-wrap" style={{ position: "relative", flex: "1 1 auto", minWidth: 0 }}>
             <Search
-              size={18}
+              size={16}
               aria-hidden
               style={{
                 position: "absolute",
                 left: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: C.text,
+                color: C.muted,
                 pointerEvents: "none",
               }}
             />
@@ -826,18 +847,19 @@ export default function SponsorDashboardClient() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search…"
+              placeholder="// SEARCH TEAMS…"
               aria-label="Search teams"
               style={{
                 width: "100%",
-                minHeight: 46,
-                padding: "0 12px 0 40px",
-                borderRadius: 10,
-                border: `1.5px solid ${C.borderStrong}`,
+                minHeight: 44,
+                padding: "0 12px 0 38px",
+                borderRadius: 0,
+                border: `2px solid ${C.borderStrong}`,
                 background: C.white,
                 fontFamily: FM,
-                fontSize: 15,
+                fontSize: 13,
                 fontWeight: 700,
+                letterSpacing: "0.04em",
                 color: C.text,
                 boxSizing: "border-box",
               }}
@@ -854,7 +876,7 @@ export default function SponsorDashboardClient() {
               minWidth: 0,
             }}
           >
-            <ArrowUpDown size={18} aria-hidden style={{ color: C.text, flexShrink: 0 }} />
+            <ArrowUpDown size={16} aria-hidden style={{ color: C.muted, flexShrink: 0 }} />
             <select
               id="sp-sort"
               className="sp-select"
@@ -862,17 +884,19 @@ export default function SponsorDashboardClient() {
               onChange={(e) => setSortMode(e.target.value as SortMode)}
               aria-label="Sort by"
               style={{
-                minWidth: 240,
+                minWidth: 220,
                 width: "max-content",
                 maxWidth: "100%",
-                minHeight: 46,
+                minHeight: 44,
                 padding: "0 36px 0 12px",
-                borderRadius: 10,
-                border: `1.5px solid ${C.borderStrong}`,
+                borderRadius: 0,
+                border: `2px solid ${C.borderStrong}`,
                 background: C.white,
                 fontFamily: FM,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
                 color: C.text,
               }}
             >
@@ -886,13 +910,15 @@ export default function SponsorDashboardClient() {
           <div
             style={{
               marginBottom: 14,
-              padding: "14px 16px",
-              borderRadius: 12,
+              padding: "12px 14px",
+              borderRadius: 0,
               border: `2px solid ${C.red}`,
               background: C.redSoft,
-              fontSize: 15,
+              fontFamily: FM,
+              fontSize: 13,
               fontWeight: 700,
               color: C.red,
+              boxShadow: SHADOW,
             }}
           >
             {loadError}
@@ -900,13 +926,15 @@ export default function SponsorDashboardClient() {
         )}
 
         {loading ? (
-          <div style={{ fontSize: 16, fontWeight: 700, padding: "24px 0" }}>Loading teams…</div>
+          <div style={{ fontFamily: FM, fontSize: 13, fontWeight: 700, padding: "24px 0", color: C.muted, letterSpacing: "0.06em" }}>
+            // LOADING TEAMS…
+          </div>
         ) : filteredProjects.length === 0 ? (
-          <div style={{ fontSize: 16, fontWeight: 700, padding: "24px 0" }}>
-            No approved teams for this award.
+          <div style={{ fontFamily: FM, fontSize: 13, fontWeight: 700, padding: "24px 0", color: C.muted, letterSpacing: "0.06em" }}>
+            // NO APPROVED TEAMS FOR THIS AWARD
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {filteredProjects.map((project, index) => {
               const draft = drafts[project.id] ?? blankDraft(project);
               const isWinner = winner?.submissionId === project.id;
@@ -924,12 +952,12 @@ export default function SponsorDashboardClient() {
                     display: "flex",
                     gap: 14,
                     alignItems: "center",
-                    background: C.card,
+                    background: C.white,
                     border: isActive || isWinner
                       ? `2px solid ${C.red}`
-                      : `1.5px solid ${C.border}`,
-                    borderRadius: 14,
-                    boxShadow: isActive || isWinner ? CARD_SHADOW_ACTIVE : CARD_SHADOW,
+                      : `2px solid ${C.borderStrong}`,
+                    borderRadius: 0,
+                    boxShadow: isActive || isWinner ? SHADOW : SHADOW_DARK,
                     padding: "14px 16px",
                     cursor: "pointer",
                   }}
@@ -937,20 +965,20 @@ export default function SponsorDashboardClient() {
                   <RankBadge rank={displayRank} />
                   <TeamThumbnail url={project.thumbnailUrl} alt={`${project.projectName} thumbnail`} />
 
-                  <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+                  <div className="sp-team-main" style={{ flex: "1 1 auto", minWidth: 0 }}>
                     <div
                       style={{
                         display: "flex",
                         flexWrap: "wrap",
                         alignItems: "center",
                         gap: 8,
-                        marginBottom: 6,
+                        marginBottom: 8,
                       }}
                     >
                       <span
                         style={{
                           fontFamily: FB,
-                          fontSize: 26,
+                          fontSize: 28,
                           letterSpacing: "0.02em",
                           lineHeight: 1,
                         }}
@@ -962,13 +990,15 @@ export default function SponsorDashboardClient() {
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            height: 24,
-                            padding: "0 10px",
-                            borderRadius: 999,
+                            height: 22,
+                            padding: "0 8px",
+                            borderRadius: 0,
                             background: C.text,
                             color: C.white,
-                            fontSize: 11,
+                            fontFamily: FM,
+                            fontSize: 10,
                             fontWeight: 700,
+                            letterSpacing: "0.08em",
                           }}
                         >
                           #1 BY YOU
@@ -979,18 +1009,20 @@ export default function SponsorDashboardClient() {
                       )}
                     </div>
 
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", marginBottom: 10 }}>
                       <span
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          height: 26,
-                          padding: "0 10px",
-                          borderRadius: 8,
+                          height: 22,
+                          padding: "0 8px",
+                          borderRadius: 0,
                           background: C.cardAlt,
                           border: `1.5px solid ${C.borderStrong}`,
-                          fontSize: 12,
+                          fontFamily: FM,
+                          fontSize: 11,
                           fontWeight: 700,
+                          letterSpacing: "0.02em",
                         }}
                       >
                         {project.projectName} ({project.teamId})
@@ -1001,31 +1033,45 @@ export default function SponsorDashboardClient() {
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            height: 26,
-                            padding: "0 10px",
-                            borderRadius: 999,
-                            background: C.azure,
-                            color: C.white,
-                            fontSize: 11,
+                            height: 22,
+                            padding: "0 8px",
+                            borderRadius: 0,
+                            background: C.azureSoft,
+                            color: C.azure,
+                            border: `1.5px solid ${C.azure}`,
+                            fontFamily: FM,
+                            fontSize: 10,
                             fontWeight: 700,
-                            letterSpacing: "0.02em",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
                           }}
                         >
-                          Uses Microsoft stack
+                          MS Stack
                         </span>
                       )}
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 14, fontWeight: 700, lineHeight: 1.35 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 3,
+                        fontFamily: FM,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        lineHeight: 1.4,
+                        color: C.text,
+                      }}
+                    >
                       <div>
-                        Overall {judgeLabel(award)} score:{" "}
-                        <strong style={{ fontSize: 15 }}>
+                        <span style={{ color: C.muted }}>// OVERALL {judgeLabel(award).toUpperCase()}: </span>
+                        <strong style={{ fontSize: 13 }}>
                           {project.judgeAvg != null ? project.judgeAvg : "—"}/100
                         </strong>
                       </div>
                       <div>
-                        Your {judgeLabel(award).toLowerCase()} score:{" "}
-                        <strong style={{ fontSize: 15 }}>
+                        <span style={{ color: C.muted }}>// YOUR {judgeLabel(award).toUpperCase()}: </span>
+                        <strong style={{ fontSize: 13 }}>
                           {project.sponsorScore != null ? project.sponsorScore : "—"}/100
                         </strong>
                       </div>
@@ -1055,9 +1101,9 @@ export default function SponsorDashboardClient() {
                       aria-label={`Score for ${project.projectName}`}
                       style={{
                         width: 96,
-                        minHeight: 46,
+                        minHeight: 48,
                         padding: "0 10px",
-                        borderRadius: 10,
+                        borderRadius: 0,
                         border: `2px solid ${C.red}`,
                         background: C.white,
                         fontFamily: FM,
@@ -1065,19 +1111,28 @@ export default function SponsorDashboardClient() {
                         fontWeight: 700,
                         color: C.text,
                         textAlign: "center",
+                        boxShadow: SHADOW,
                       }}
                     />
                     <div
                       className="sp-score-status"
-                      style={{ fontSize: 11, fontWeight: 700, minHeight: 14, color: draft.error ? C.red : C.text }}
+                      style={{
+                        fontFamily: FM,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        minHeight: 14,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: draft.error ? C.red : C.muted,
+                      }}
                     >
                       {draft.error
                         ? draft.error
                         : draft.saving
-                          ? "Saving…"
+                          ? "// Saving…"
                           : draft.saved
-                            ? "Saved"
-                            : "Auto-saves"}
+                            ? "// Saved"
+                            : "// Auto-saves"}
                     </div>
                   </div>
                 </div>

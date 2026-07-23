@@ -1,56 +1,55 @@
-// Sponsor dashboard — soft card UI, portal fonts, high contrast.
+// Sponsor dashboard — HackX brutalist tokens (aligned with judge portal).
 
 export const C = {
   bg: "#f2ede5",
-  card: "#ffffff",
-  cardAlt: "#fef9f1",
+  card: "#fef9f1",
+  cardAlt: "#f2ede5",
   text: "#1d1c17",
-  border: "#d4cdc0",
+  muted: "#7a7669",
+  border: "#d8d2c5",
   borderStrong: "#1d1c17",
   red: "#CC0000",
   redHover: "#A20000",
-  redSoft: "#fce8e8",
+  redSoft: "rgba(204,0,0,0.08)",
   azure: "#0078D4",
-  azureSoft: "#e8f3fb",
-  white: "#ffffff",
+  azureSoft: "rgba(0,120,212,0.12)",
+  white: "#fef9f1",
   gold: "#E6B800",
-  silver: "#9A9A9A",
+  silver: "#C0C0C0",
   bronze: "#C47A3A",
 } as const;
 
 export const FM = "var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace";
 export const FB = "var(--font-bebas-neue), 'Bebas Neue', sans-serif";
 
-export const CARD_SHADOW = "0 2px 8px rgba(29, 28, 23, 0.08)";
-export const CARD_SHADOW_ACTIVE = "0 4px 16px rgba(204, 0, 0, 0.18)";
+/** Hard offset shadow — signature HackX chrome */
+export const SHADOW = "4px 4px 0 0 #CC0000";
+export const SHADOW_DARK = "3px 3px 0 0 #1d1c17";
 
 export const RESPONSIVE_CSS = `
-  .sp-award-tab { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .sp-award-tab { transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s; }
   .sp-award-pane { animation: sp-pane-in 0.22s ease; }
   @keyframes sp-pane-in {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .sp-team-card { transition: border-color 0.15s, box-shadow 0.15s; }
-  .sp-team-card:hover { border-color: #CC0000; }
+  .sp-team-card { transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s; }
+  .sp-team-card:hover { border-color: #CC0000 !important; box-shadow: 4px 4px 0 0 #CC0000 !important; }
 
-  .sp-logout-btn { transition: background 0.15s, border-color 0.15s; }
-  .sp-logout-btn:hover { background: rgba(204,0,0,0.08); border-color: #ff2222; }
-  .sp-logout-btn:active { background: rgba(204,0,0,0.14); transform: translateY(1px); }
+  .sp-logout-btn { transition: background 0.15s, border-color 0.15s, color 0.15s; }
+  .sp-logout-btn:hover { background: #CC0000; color: #fef9f1; border-color: #CC0000; }
+  .sp-logout-btn:active { transform: translateY(1px); }
 
   .sp-hamburger { transition: border-color 0.15s, color 0.15s, background 0.15s; }
-  .sp-hamburger:hover { border-color: #CC0000; color: #CC0000; background: rgba(204,0,0,0.06); }
-
-  .sp-score-btn:hover:not(:disabled) { background: #A20000; }
-  .sp-score-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .sp-hamburger:hover { border-color: #CC0000; color: #CC0000; background: rgba(204,0,0,0.07); }
 
   .sp-input:focus,
   .sp-select:focus,
   .sp-score-input:focus {
     outline: none;
     border-color: #CC0000 !important;
-    box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.18);
+    box-shadow: 3px 3px 0 0 #CC0000;
   }
 
   .sp-select {
@@ -93,12 +92,12 @@ export const RESPONSIVE_CSS = `
 
     .sp-award-tab .sp-award-tab-meta {
       margin-top: 6px !important;
-      font-size: 12px !important;
+      font-size: 11px !important;
     }
 
-    /* Drop outer red pane chrome — full-bleed content */
     .sp-award-pane {
-      border: none !important;
+      border-left: none !important;
+      border-right: none !important;
       border-radius: 0 !important;
       box-shadow: none !important;
       margin-top: 0 !important;
@@ -129,6 +128,7 @@ export const RESPONSIVE_CSS = `
       align-items: flex-start !important;
       gap: 12px !important;
       padding: 12px !important;
+      box-shadow: 3px 3px 0 0 #1d1c17 !important;
     }
 
     .sp-thumb {
@@ -147,8 +147,8 @@ export const RESPONSIVE_CSS = `
       align-items: center !important;
       justify-content: flex-start !important;
       gap: 10px !important;
-      padding-top: 4px !important;
-      border-top: 1.5px solid #d4cdc0;
+      padding-top: 8px !important;
+      border-top: 1.5px solid #d8d2c5;
     }
 
     .sp-score-input {
