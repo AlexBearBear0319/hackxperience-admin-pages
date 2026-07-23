@@ -175,6 +175,7 @@ export async function GET(request: NextRequest) {
         problemSolutionFit:  row?.problem_solution_fit  ?? null,
         innovationCreativity: row?.innovation_creativity ?? null,
         presentationQuality:  row?.presentation_quality  ?? null,
+        entrepreneurship:  row?.entrepreneurship  ?? null,
         comments: row?.private_comment ?? null,
       };
     });

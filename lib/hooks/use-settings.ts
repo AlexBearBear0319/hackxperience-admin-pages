@@ -15,6 +15,7 @@ export type GlobalSettings = {
   problem_solution_fit_value: number;
   innovation_creativity_value: number;
   presentation_quality_value: number;
+  entrepreneurship_value: number;
   updated_at: string;
 };
 
@@ -31,10 +32,11 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   max_file_size: 10,
   deadline: "",
   active_tracks: [],
-  technical_execution_value: 30,
-  problem_solution_fit_value: 25,
-  innovation_creativity_value: 25,
+  technical_execution_value: 20,
+  problem_solution_fit_value: 20,
+  innovation_creativity_value: 30,
   presentation_quality_value: 20,
+  entrepreneurship_value: 10,
   updated_at: "",
 };
 
@@ -70,6 +72,9 @@ function normalizeSettings(value: Partial<GlobalSettings> | undefined): GlobalSe
     presentation_quality_value: typeof next.presentation_quality_value === "number"
       ? Math.max(0, Math.round(next.presentation_quality_value))
       : DEFAULT_SETTINGS.presentation_quality_value,
+    entrepreneurship_value: typeof next.entrepreneurship_value === "number"
+      ? Math.max(0, Math.round(next.entrepreneurship_value))
+      : DEFAULT_SETTINGS.entrepreneurship_value,
     updated_at: typeof next.updated_at === "string" ? next.updated_at : DEFAULT_SETTINGS.updated_at,
   };
 }

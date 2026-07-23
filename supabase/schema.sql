@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS submissions (
 
   -- Step 01: Identity
   project_name  TEXT        NOT NULL,
-  team_id       TEXT        NOT NULL UNIQUE,
+  team_id       INTEGER     NOT NULL UNIQUE CHECK (team_id >= 1),
+  team_name     TEXT        NOT NULL UNIQUE,
   track         TEXT        NOT NULL,
   description   TEXT        NOT NULL,
   pitch         TEXT        NOT NULL,
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS submissions (
 -- Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS idx_submissions_edit_token ON submissions(edit_token);
 CREATE INDEX IF NOT EXISTS idx_submissions_team_id           ON submissions(team_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_team_name         ON submissions(team_name);
 CREATE INDEX IF NOT EXISTS idx_submissions_status            ON submissions(status);
 
 -- Auto-update updated_at on every UPDATE
@@ -79,6 +81,8 @@ CREATE OR REPLACE VIEW public_projects AS
   SELECT
     id,
     project_name,
+    team_id,
+    team_name,
     description,
     pitch,
     tech_stack,
@@ -86,7 +90,6 @@ CREATE OR REPLACE VIEW public_projects AS
     github_repo_url,
     live_demo_url,
     demo_video_url,
-    team_id,
     submitted_at
   FROM submissions
   WHERE status = 'APPROVED';
@@ -97,7 +100,7 @@ GRANT SELECT ON public_projects TO anon, authenticated;
 CREATE TABLE IF NOT EXISTS community_ballots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source_submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
-  source_team_id TEXT NOT NULL,
+  source_team_id INTEGER NOT NULL,
   voter_name TEXT NOT NULL,
   voter_email TEXT NOT NULL UNIQUE,
   voted_submission_ids UUID[] NOT NULL CHECK (cardinality(voted_submission_ids) = 3),
@@ -136,7 +139,7 @@ ALTER TABLE judges_scores
   ADD COLUMN IF NOT EXISTS entrepreneurship smallint;
 
 ALTER TABLE settings
-  ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 20;
+  ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 10;
 
 CREATE TABLE IF NOT EXISTS sponsor_scores (
   sponsor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

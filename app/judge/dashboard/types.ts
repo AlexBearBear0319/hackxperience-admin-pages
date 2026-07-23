@@ -6,6 +6,7 @@ export interface ScoreEntry {
   problemSolution: string;
   innovation: string;
   presentation: string;
+  entrepreneurship: string;
   comment: string;
   saved: boolean;
   savedTotal: number;

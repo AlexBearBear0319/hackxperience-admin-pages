@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS community_ballots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source_submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
-  source_team_id TEXT NOT NULL,
+  source_team_id INTEGER NOT NULL,
   voter_name TEXT NOT NULL,
   voter_email TEXT NOT NULL UNIQUE,
   voted_submission_ids UUID[] NOT NULL CHECK (cardinality(voted_submission_ids) = 3),
