@@ -3,7 +3,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, Eye, EyeOff, LogOut, Menu, Search, Trophy, X } from "lucide-react";
+import { ArrowUpDown, ClipboardList, Eye, EyeOff, LogOut, Menu, Search, Trophy, X } from "lucide-react";
+import Link from "next/link";
 import ScrollToTopButton from "@/app/components/ui/scroll-to-top-button";
 import {
   C,
@@ -636,6 +637,35 @@ export default function SponsorDashboardClient() {
             </div>
 
             <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
+              <Link
+                href="/sponsor/scores"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  width: "100%",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 48,
+                  padding: "0 16px",
+                  border: `2px solid ${C.borderStrong}`,
+                  borderRadius: 0,
+                  background: C.white,
+                  color: C.text,
+                  fontFamily: FM,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  boxShadow: SHADOW_DARK,
+                  boxSizing: "border-box",
+                }}
+              >
+                <ClipboardList size={16} aria-hidden />
+                Judge scores
+              </Link>
+
               <button
                 type="button"
                 onClick={() => setRevealTrackWinners((prev) => !prev)}
