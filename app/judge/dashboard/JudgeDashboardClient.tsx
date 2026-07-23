@@ -22,6 +22,7 @@ type JudgeProjectsResponse = {
       problem_solution_fit: number | null;
       innovation_creativity: number | null;
       presentation_quality: number | null;
+      entrepreneurship: number | null;
       private_comment: string | null;
       total: number | null;
     }
@@ -75,12 +76,18 @@ export default function JudgeDashboardClient() {
         label: "Presentation Quality",
         max: Math.max(0, Math.round(settings.presentation_quality_value)),
       },
+      {
+        key: "entrepreneurship",
+        label: "Entrepreneurship",
+        max: Math.max(0, Math.round(settings.entrepreneurship_value)),
+      },
     ],
     [
       settings.innovation_creativity_value,
       settings.presentation_quality_value,
       settings.problem_solution_fit_value,
       settings.technical_execution_value,
+      settings.entrepreneurship_value,
     ],
   );
 
@@ -117,6 +124,7 @@ export default function JudgeDashboardClient() {
           problemSolution: saved?.problem_solution_fit != null ? String(saved.problem_solution_fit) : "",
           innovation: saved?.innovation_creativity != null ? String(saved.innovation_creativity) : "",
           presentation: saved?.presentation_quality != null ? String(saved.presentation_quality) : "",
+          entrepreneurship: saved?.entrepreneurship != null ? String(saved.entrepreneurship) : "",
           comment: saved?.private_comment ?? "",
           saved: typeof saved?.total === "number",
           savedTotal: typeof saved?.total === "number" ? saved.total : 0,
@@ -176,6 +184,7 @@ export default function JudgeDashboardClient() {
         problemSolution: score.problemSolution,
         innovation: score.innovation,
         presentation: score.presentation,
+        entrepreneurship: score.entrepreneurship,
         comment: score.comment,
       }),
     });
@@ -253,7 +262,9 @@ export default function JudgeDashboardClient() {
             // HELP
           </h2>
           <a
-            href="#"
+            href="https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
             className="r-help-link"
             style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 20px", borderLeft: "3px solid transparent", fontFamily: FM, fontSize: 11, color: C.primary, textDecoration: "none", letterSpacing: "0.04em" }}
           >

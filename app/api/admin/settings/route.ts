@@ -15,6 +15,7 @@ type SettingsRow = {
   problem_solution_fit_value: number;
   innovation_creativity_value: number;
   presentation_quality_value: number;
+  entrepreneurship_value: number;
   updated_at: string;
 };
 
@@ -138,7 +139,9 @@ export async function PATCH(request: NextRequest) {
   if (typeof body?.presentation_quality_value === "number") {
     updatePayload.presentation_quality_value = Math.max(0, Math.min(100, Math.round(body.presentation_quality_value)));
   }
-
+  if (typeof body?.entrepreneurship_value === "number") {
+    updatePayload.entrepreneurship_value = Math.max(0, Math.min(100, Math.round(body.entrepreneurship_value)));
+  }
   if (Object.keys(updatePayload).length === 0) {
     return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
   }
@@ -165,6 +168,7 @@ export async function PATCH(request: NextRequest) {
     "problem_solution_fit_value",
     "innovation_creativity_value",
     "presentation_quality_value",
+    "entrepreneurship_value",
   ];
   const isCriteriaUpdate = criteriaKeys.some((k) => k in updatePayload);
   const isSubmissionConfigUpdate =

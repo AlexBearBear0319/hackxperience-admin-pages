@@ -327,13 +327,13 @@ export function GuideMentoring() {
   );
 }
 
-/** Judging — timed pitch + weighted rubric. */
+/** Pitching — timed pitch + weighted rubric. */
 export function GuideJudging() {
   return (
     <GuideSectionShell id="judging">
       <GuideSectionIntro>
-        <GuideSectionLabel>JUDGING</GuideSectionLabel>
-        <GuideSectionTitle>Judging</GuideSectionTitle>
+        <GuideSectionLabel>PITCHING</GuideSectionLabel>
+        <GuideSectionTitle>Pitching</GuideSectionTitle>
         <GuideScheduleMeta when={GUIDE_JUDGING.schedule.when} where={GUIDE_JUDGING.schedule.where} />
       </GuideSectionIntro>
 
@@ -393,6 +393,7 @@ export function GuideVoting() {
       <GuideSectionIntro>
         <GuideSectionLabel>VOTING</GuideSectionLabel>
         <GuideSectionTitle>Community voting</GuideSectionTitle>
+        <GuideScheduleMeta when={GUIDE_VOTING.schedule.when} where={GUIDE_VOTING.schedule.where} />
       </GuideSectionIntro>
 
       <div className="grid sm:grid-cols-2 gap-3 lg:gap-4 mb-3 lg:mb-4">

@@ -139,7 +139,7 @@ ALTER TABLE judges_scores
   ADD COLUMN IF NOT EXISTS entrepreneurship smallint;
 
 ALTER TABLE settings
-  ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 20;
+  ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 10;
 
 CREATE TABLE IF NOT EXISTS sponsor_scores (
   sponsor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

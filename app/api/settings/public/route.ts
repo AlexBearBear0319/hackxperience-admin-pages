@@ -15,19 +15,21 @@ type PublicSettingsRow = {
   problem_solution_fit_value: number | null;
   innovation_creativity_value: number | null;
   presentation_quality_value: number | null;
+  entrepreneurship_value: number | null;
   updated_at: string;
 };
 
 const DEFAULT_MAX_FILE_SIZE_MB = 10;
-const DEFAULT_TECHNICAL_EXECUTION_VALUE = 30;
-const DEFAULT_PROBLEM_SOLUTION_FIT_VALUE = 25;
-const DEFAULT_INNOVATION_CREATIVITY_VALUE = 25;
+const DEFAULT_TECHNICAL_EXECUTION_VALUE = 20;
+const DEFAULT_PROBLEM_SOLUTION_FIT_VALUE = 20;
+const DEFAULT_INNOVATION_CREATIVITY_VALUE = 30;
 const DEFAULT_PRESENTATION_QUALITY_VALUE = 20;
+const DEFAULT_ENTREPRENEURSHIP_VALUE = 10;
 
 export async function GET() {
   const { data, error } = await supabaseServer
     .from("settings")
-    .select("id,submission_status,resubmission_status,max_team_size,max_file_size,deadline,active_tracks,technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value,updated_at")
+    .select("id,submission_status,resubmission_status,max_team_size,max_file_size,deadline,active_tracks,technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value,entrepreneurship_value,updated_at")
     .eq("id", 1)
     .maybeSingle<PublicSettingsRow>();
 
@@ -60,6 +62,9 @@ export async function GET() {
       presentation_quality_value: typeof data.presentation_quality_value === "number"
         ? Math.max(0, Math.round(data.presentation_quality_value))
         : DEFAULT_PRESENTATION_QUALITY_VALUE,
+      entrepreneurship_value: typeof data.entrepreneurship_value === "number"
+        ? Math.max(0, Math.round(data.entrepreneurship_value))
+        : DEFAULT_ENTREPRENEURSHIP_VALUE,
     },
   });
 }

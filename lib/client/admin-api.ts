@@ -24,6 +24,7 @@ export type AdminSettingsRow = {
   problem_solution_fit_value: number;
   innovation_creativity_value: number;
   presentation_quality_value: number;
+  entrepreneurship_value: number;
   updated_at: string;
 };
 

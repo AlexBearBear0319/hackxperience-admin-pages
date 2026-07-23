@@ -18,6 +18,7 @@ type JudgeSavedScore = {
   problem_solution_fit: number | null;
   innovation_creativity: number | null;
   presentation_quality: number | null;
+  entrepreneurship: number | null;
   private_comment: string | null;
   total: number | null;
 };
@@ -131,6 +132,7 @@ export async function GET(request: NextRequest) {
       problem_solution_fit: row.problem_solution_fit,
       innovation_creativity: row.innovation_creativity,
       presentation_quality: row.presentation_quality,
+      entrepreneurship: row.entrepreneurship,
       private_comment: row.private_comment,
       total: totalScore(row),
     };
