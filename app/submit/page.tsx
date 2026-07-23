@@ -1591,6 +1591,223 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
   );
 }
 
+// ─── Post-Submission Survey (highly recommended, non-blocking) ─
+// 6 questions: 5 auto-advancing single-tap choices + 1 final free-text
+// screen. No skip/exit hatch once started — shown only after a successful
+// submission, so it never gates the submission itself. A failed
+// POST to /api/survey is caught and logged, never surfaced to the user.
+
+type SurveyStepDef =
+  | {
+      type: "choice"; key: string; question: string; options: string[];
+      // For ordinal scales (e.g. 1-5) — labels the endpoints so it's never
+      // ambiguous which end is good/bad, and a short hint line under the question.
+      optionLabels?: Record<string, string>;
+      scaleHint?: string;
+    }
+  | { type: "text"; key: string; question: string };
+
+const SURVEY_STEPS: SurveyStepDef[] = [
+  {
+    type: "choice", key: "overall_rating", question: "RATE YOUR HACKXPERIENCE",
+    options: ["1", "2", "3", "4", "5"],
+    optionLabels: { "1": "WORST", "5": "BEST" },
+    scaleHint: "1 = WORST · 5 = BEST",
+  },
+  { type: "choice", key: "heard_from", question: "HOW'D YOU HEAR ABOUT HACKXPERIENCE?", options: ["INSTAGRAM", "FRIEND", "POSTER", "TELEGRAM", "OTHER"] },
+  {
+    type: "choice", key: "venue_rating", question: "RATE THE VENUE & LOGISTICS",
+    options: ["1", "2", "3", "4", "5"],
+    optionLabels: { "1": "WORST", "5": "BEST" },
+    scaleHint: "1 = WORST · 5 = BEST",
+  },
+  { type: "choice", key: "biggest_challenge", question: "BIGGEST CHALLENGE YOU FACED?", options: ["TIME", "TEAM COORDINATION", "TECH ISSUES", "IDEA & SCOPE", "NONE"] },
+  { type: "choice", key: "would_rejoin", question: "WOULD YOU JOIN AGAIN?", options: ["YES", "MAYBE", "NO"] },
+  { type: "text", key: "final_feedback", question: "ANYTHING ELSE?" },
+];
+
+function surveyStorageKey(teamId: string) {
+  return `hx26_survey_${teamId}`;
+}
+
+function SurveyStep({
+  n, total, question, type, options, optionLabels, scaleHint,
+  onChoice, textValue, onTextChange, onSubmitText, submitting,
+}: {
+  n: number; total: number; question: string; type: "choice" | "text";
+  options?: string[];
+  optionLabels?: Record<string, string>;
+  scaleHint?: string;
+  onChoice?: (value: string) => void;
+  textValue?: string; onTextChange?: (v: string) => void;
+  onSubmitText?: () => void;
+  submitting?: boolean;
+}) {
+  const pct = Math.round((n / total) * 100);
+  return (
+    <div>
+      <Mono color={MUTED} size={10} weight={700}>// STEP {n}/{total}</Mono>
+      <div style={{ height: 4 }} />
+      <div style={{ height: 6, background: "#e9e3d6", border: `1.5px solid ${DARK_BG}`, position: "relative", marginBottom: 16 }}>
+        <div style={{ position: "absolute", inset: 0, width: `${pct}%`, background: RED, transition: "width 0.3s ease" }} />
+      </div>
+
+      <div style={{ fontFamily: FS, fontSize: 17, fontWeight: 800, color: DARK_BG, marginBottom: scaleHint ? 4 : 16, lineHeight: 1.3 }}>
+        {question}
+      </div>
+      {scaleHint && (
+        <Mono color={MUTED} size={10} weight={700} style={{ display: "block", marginBottom: 16 }}>// {scaleHint}</Mono>
+      )}
+
+      {type === "choice" && options && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(120px, 100%), 1fr))", gap: 10 }}>
+          {options.map(opt => {
+            const subLabel = optionLabels?.[opt];
+            return (
+              <motion.button
+                key={opt}
+                type="button"
+                onClick={() => onChoice?.(opt)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 420, damping: 18 }}
+                style={{
+                  minHeight: 52, padding: "10px 14px",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+                  border: `1.5px solid ${DARK_BG}`, background: "#fff", color: DARK_BG,
+                  fontFamily: FM, fontSize: 13, fontWeight: 800, letterSpacing: "0.06em",
+                  textTransform: "uppercase", cursor: "pointer", boxShadow: SHADOW_SM,
+                }}
+              >
+                <span>{opt}</span>
+                {subLabel && <span style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: "0.08em" }}>{subLabel}</span>}
+              </motion.button>
+            );
+          })}
+        </div>
+      )}
+
+      {type === "text" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <STextarea
+            value={textValue ?? ""}
+            onChange={(v) => onTextChange?.(v.slice(0, 200))}
+            placeholder="Type your feedback…"
+            suffix={`${(textValue ?? "").length} / 200`}
+            h={80}
+          />
+          <RedBtn onClick={onSubmitText} disabled={submitting} full>
+            {submitting ? "Submitting…" : "[ Done ]"}
+          </RedBtn>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SurveyComplete() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ width: 20, height: 20, background: GREEN, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        ✓
+      </div>
+      <Mono color={MUTED} size={11} weight={600}>
+        // Feedback received — thanks for helping us improve!
+      </Mono>
+    </div>
+  );
+}
+
+function SurveyWizard({ teamId }: { teamId: string }) {
+  const [phase, setPhase] = useState<"prompt" | "active" | "done">("prompt");
+  const [hydrated, setHydrated] = useState(false);
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [feedbackText, setFeedbackText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!teamId) { setHydrated(true); return; }
+    try {
+      const prior = localStorage.getItem(surveyStorageKey(teamId));
+      if (prior === "done") setPhase("done");
+    } catch { /* localStorage unavailable — treat as first visit */ }
+    setHydrated(true);
+  }, [teamId]);
+
+  if (!hydrated || !teamId) return null;
+
+  const markDone = () => {
+    try { localStorage.setItem(surveyStorageKey(teamId), "done"); } catch { /* non-fatal */ }
+  };
+
+  const handleChoiceAnswer = (key: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [key]: value }));
+    if (step < SURVEY_STEPS.length - 1) setStep(step + 1);
+  };
+
+  const handleFinish = async () => {
+    setSaving(true);
+    const finalAnswers = { ...answers, final_feedback: feedbackText.trim() };
+    markDone();
+    try {
+      const res = await fetch("/api/survey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId, answers: finalAnswers }),
+      });
+      if (!res.ok) {
+        console.warn("Survey submit failed:", await res.text().catch(() => res.statusText));
+      }
+    } catch (err) {
+      // Never surfaced to the user — a failed save must not affect the
+      // success page or the team_id it already confirmed.
+      console.warn("Survey submit error:", err);
+    } finally {
+      setSaving(false);
+      setPhase("done");
+    }
+  };
+
+  const current = SURVEY_STEPS[step];
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} style={{ marginBottom: 18 }}>
+      <Card padding={20}>
+        {phase === "prompt" && (
+          <div>
+            <Mono color={RED} size={11} weight={800} style={{ letterSpacing: "0.1em", display: "block", marginBottom: 6 }}>&gt; Quick Feedback</Mono>
+            <div style={{ fontFamily: FS, fontSize: 15, fontWeight: 700, color: DARK_BG, marginBottom: 4 }}>
+              Got 45 seconds? Help us make HackXperience better.
+            </div>
+            <Mono color={MUTED} size={10} style={{ display: "block", marginBottom: 16 }}>// {SURVEY_STEPS.length} QUICK TAPS · HIGHLY RECOMMENDED</Mono>
+            <RedBtn onClick={() => setPhase("active")}>[ Start Survey ]</RedBtn>
+          </div>
+        )}
+
+        {phase === "active" && (
+          <SurveyStep
+            n={step + 1}
+            total={SURVEY_STEPS.length}
+            question={current.question}
+            type={current.type}
+            options={current.type === "choice" ? current.options : undefined}
+            optionLabels={current.type === "choice" ? current.optionLabels : undefined}
+            scaleHint={current.type === "choice" ? current.scaleHint : undefined}
+            onChoice={(v) => handleChoiceAnswer(current.key, v)}
+            textValue={feedbackText}
+            onTextChange={setFeedbackText}
+            onSubmitText={handleFinish}
+            submitting={saving}
+          />
+        )}
+
+        {phase === "done" && <SurveyComplete />}
+      </Card>
+    </motion.div>
+  );
+}
+
 // ─── Success State ────────────────────────────────────────────
 
 function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: string | null; isNew: boolean }) {
@@ -1661,8 +1878,8 @@ function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: 
           <Mono color={RED} size={11} weight={800} style={{ letterSpacing: "0.1em" }}>&gt; What Happens Next</Mono>
           <div style={{ height: 12 }} />
           {[
-            ["01", "Admin reviews your submission", "within ~24h — they may approve, reject, or ping for fixes."],
-            ["02", "Judges score approved entries", "100 pts split across 4 criteria."],
+            ["01", "Admin reviews your submission", ""],
+            ["02", "Judges score approved entries", ""],
             ["03", "Results posted to Project Gallery", "1st / 2nd / 3rd / Crowd Choice announced post-event."],
           ].map(([n, t, sub], i) => (
             <motion.div
@@ -1675,12 +1892,17 @@ function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: 
               <Badge n={n} size={24} />
               <div>
                 <div style={{ fontFamily: FS, fontSize: 13, fontWeight: 700 }}>{t}</div>
-                <div style={{ fontFamily: FM, fontSize: 11, color: MUTED, marginTop: 2 }}>// {sub}</div>
+                {sub && <div style={{ fontFamily: FM, fontSize: 11, color: MUTED, marginTop: 2 }}>// {sub}</div>}
               </div>
             </motion.div>
           ))}
         </Card>
       </motion.div>
+
+      {/* Post-submission survey — highly recommended, collapsed by default,
+          never blocks or hides the confirmation above. Only shown right after
+          a fresh submit, not when revisiting an existing submission via edit link. */}
+      {isNew && form.teamId && <SurveyWizard teamId={form.teamId} />}
 
       {/* Edit link */}
       {editToken && (
