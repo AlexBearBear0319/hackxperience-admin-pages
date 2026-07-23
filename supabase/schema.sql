@@ -157,3 +157,20 @@ CREATE INDEX IF NOT EXISTS idx_sponsor_scores_award_score
 ALTER TABLE sponsor_scores ENABLE ROW LEVEL SECURITY;
 -- No anon/authenticated policies: access only via service-role API routes.
 
+-- ───────────────────────────────────────────────────────────────────────────
+-- Post-submission feedback survey (highly recommended, non-blocking)
+-- ───────────────────────────────────────────────────────────────────────────
+-- NOTE: submissions.team_id is TEXT (confirmed live schema) — see the FK below.
+CREATE TABLE IF NOT EXISTS survey_responses (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id       TEXT NOT NULL REFERENCES submissions(team_id) ON DELETE CASCADE,
+  answers       JSONB NOT NULL DEFAULT '{}',
+  submitted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_survey_responses_team_id ON survey_responses(team_id);
+
+ALTER TABLE survey_responses ENABLE ROW LEVEL SECURITY;
+-- No anon/authenticated policies: writes go through POST /api/survey
+-- (service-role key, bypasses RLS) — same posture as submissions/community_ballots.
+

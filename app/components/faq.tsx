@@ -135,7 +135,7 @@ function buildFaqData(): FaqCategory[] {
     items: [
       {
         question: "WHEN AND WHERE IS THE HACKATHON?",
-        answer: <>24–25 July 2026 on SIM Campus. Venue details and the full schedule will be confirmed closer to the event.</>,
+        answer: <>24–25 July 2026 on SIM Campus. See the full day-of schedule in the <a href="#timeline" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Timeline</a> section.</>,
       },
       {
         question: "WHAT ARE THE TRACKS?",
