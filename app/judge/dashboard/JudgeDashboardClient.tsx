@@ -263,6 +263,8 @@ export default function JudgeDashboardClient() {
           </h2>
           <a
             href="https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
             className="r-help-link"
             style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 20px", borderLeft: "3px solid transparent", fontFamily: FM, fontSize: 11, color: C.primary, textDecoration: "none", letterSpacing: "0.04em" }}
           >
