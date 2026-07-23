@@ -714,16 +714,17 @@ export default function JudgeDashboardClient() {
                       {/* View Submission button */}
                       <motion.button
                         onClick={() => setOverlayProject(expandedProject)}
-                        whileHover={{ scale: 1.03, borderColor: C.primary }}
+                        whileHover={{ scale: 1.03, background: "rgba(204,0,0,0.06)" }}
                         whileTap={{ scale: 0.97 }}
                         transition={SPRING}
                         style={{
+                          marginBottom: 14,
                           width: "100%", height: 34,
-                          background: "transparent",
+                          background: "rgba(0,0,0,0)",
                           border: `1px solid ${C.textPrimary}`,
                           fontFamily: FM, fontSize: 11, color: C.textPrimary,
                           cursor: "pointer", letterSpacing: "0.06em",
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          display: "flex", alignItems: "center", justifyContent: "flex-start", paddingLeft: 14, gap: 6,
                           transition: "border-color 0.15s",
                         }}
                       >
@@ -732,6 +733,32 @@ export default function JudgeDashboardClient() {
                           <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
                         </svg>
                         VIEW SUBMISSION
+                      </motion.button>
+
+                      {/* View Judging Guidelines button */}
+                      <motion.button
+                        onClick={() => {
+                          window.open("https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing", "_blank", "noopener,noreferrer");
+                        }}
+                        whileHover={{ scale: 1.03, background: "rgba(204,0,0,0.06)"}}
+                        whileTap={{ scale: 0.97 }}
+                        transition={SPRING}
+                        style={{
+                          width: "100%", height: 34,
+                          background: "rgba(0,0,0,0)",
+                          border: `1px solid`,
+                          borderColor: C.primary,
+                          fontFamily: FM, fontSize: 11, color: C.primary,
+                          cursor: "pointer", letterSpacing: "0.06em",
+                          display: "flex", alignItems: "center", justifyContent: "flex-start", paddingLeft: 14, gap: 6,
+                          transition: "border-color 0.15s",
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <rect x="0.5" y="0.5" width="11" height="11" rx="1" stroke="currentColor" strokeWidth="1"/>
+                          <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        </svg>
+                        VIEW JUDGING GUIDELINES
                       </motion.button>
                     </div>
                   </div>
