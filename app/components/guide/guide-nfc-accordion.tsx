@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { IBM_Plex_Mono } from "next/font/google";
 import { GUIDE_NFC_REWRITE_STEPS } from "@/lib/guide-content";
-import { DARK_BG, MUTED, RED, SHADOW_SM, WHITE } from "./guide-tokens";
+import { DARK_BG, MUTED, SHADOW_SM, WHITE } from "./guide-tokens";
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -51,7 +51,7 @@ export default function GuideNfcAccordion() {
           className="text-[11px] sm:text-[12px] font-bold tracking-wide uppercase"
           style={{ color: DARK_BG }}
         >
-          How to rewrite (iPhone / Android)
+          How to rewrite
         </span>
       </button>
 
@@ -65,24 +65,14 @@ export default function GuideNfcAccordion() {
             className="overflow-hidden"
           >
             <div
-              className="grid gap-5 px-4 sm:px-5 pb-4 text-sm leading-relaxed"
+              className="px-4 sm:px-5 pb-4 text-sm leading-relaxed"
               style={{ color: MUTED }}
             >
-              {GUIDE_NFC_REWRITE_STEPS.map((block) => (
-                <div key={block.platform}>
-                  <p
-                    className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-2`}
-                    style={{ color: RED }}
-                  >
-                    {`// ${block.platform}`}
-                  </p>
-                  <ol className="list-decimal pl-4 space-y-1.5">
-                    {block.steps.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
-              ))}
+              <ol className="list-decimal pl-4 space-y-1.5">
+                {GUIDE_NFC_REWRITE_STEPS.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
             </div>
           </motion.div>
         ) : null}
