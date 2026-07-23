@@ -650,6 +650,19 @@ export default function JudgeDashboardClient() {
                       </svg>
                       VIEW SUBMISSION
                     </button>
+                    <button
+                      className="r-ghost-btn"
+                      onClick={() => {
+                        window.open("https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing", "_blank", "noopener,noreferrer");
+                      }}
+                      style={{ width: "100%", padding: "8px 0", background: "transparent", border: `1px solid ${C.primary}`, borderRadius: 0, fontFamily: FM, fontSize: 10, fontWeight: 700, color: C.primary, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <rect x="0.5" y="0.5" width="11" height="11" rx="1" stroke="currentColor" strokeWidth="1"/>
+                        <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                      </svg>
+                      VIEW JUDGING GUIDELINES
+                    </button>
                   </div>
 
                   {/* Left: project image + info (Desktop) */}
