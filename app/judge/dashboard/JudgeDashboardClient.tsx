@@ -220,84 +220,7 @@ export default function JudgeDashboardClient() {
   return (
     <div style={{ minHeight: "100vh", background: C.bgPrimary }}>
       <style>{RESPONSIVE_CSS}</style>
-
-      {/* ── Sidebar (fixed full-height left column, mirrors admin portal) ── */}
-      <aside
-        className="r-sidebar"
-        style={{ position: "fixed", top: 0, left: 0, height: "100vh", width: 256, background: C.white, borderRight: `1px solid ${C.primary}`, display: "flex", flexDirection: "column", zIndex: 40 }}
-      >
-        {/* MAIN group */}
-        <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: "16px 0 12px" }}>
-          <h2 style={{ margin: 0, padding: "0 20px 12px", fontFamily: FM, fontSize: 11, fontWeight: 400, color: C.textMuted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
-            // MAIN
-          </h2>
-          {NAV_ITEMS.map((item) => (
-            <div
-              key={item.key}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "11px 20px",
-                background: item.active ? "rgba(204,0,0,0.07)" : "transparent",
-                borderLeft: item.active ? `3px solid ${C.primary}` : "3px solid transparent",
-                cursor: "pointer",
-                transition: "background 0.15s",
-              }}
-            >
-              <span style={{ fontFamily: FM, fontSize: 11, color: item.active ? C.primary : C.textMuted, letterSpacing: "0.04em" }}>
-                {item.icon}
-              </span>
-              <span style={{ fontFamily: FM, fontSize: 11, color: item.active ? C.textPrimary : C.textMuted, letterSpacing: "0.06em", fontWeight: item.active ? 700 : 400 }}>
-                {item.label}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Spacer pushes HELP + profile to the bottom */}
-        <div style={{ flex: 1 }} />
-
-        {/* HELP group (bottom, before logout) */}
-        <div style={{ borderTop: `1px solid ${C.borderLight}`, padding: "16px 0 12px" }}>
-          <h2 style={{ margin: 0, padding: "0 20px 12px", fontFamily: FM, fontSize: 11, fontWeight: 400, color: C.textMuted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
-            // HELP
-          </h2>
-          <a
-            href="https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="r-help-link"
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 20px", borderLeft: "3px solid transparent", fontFamily: FM, fontSize: 11, color: C.primary, textDecoration: "none", letterSpacing: "0.04em" }}
-          >
-            <span style={{ color: C.textMuted }}>?</span>
-            Judging guidelines ↗
-          </a>
-        </div>
-
-        {/* Profile block */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "13px 20px", borderTop: `1px solid ${C.borderLight}`, background: C.bgPrimary }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-            <span style={{ fontFamily: FM, fontSize: 12, color: C.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              &gt; {sessionUser}
-            </span>
-            <span style={{ fontFamily: FM, fontSize: 10, color: C.textMuted }}>// JUDGE</span>
-          </div>
-          <button
-            type="button"
-            className="r-icon-btn-red"
-            onClick={handleLogout}
-            aria-label="Logout"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, flexShrink: 0, border: `1px solid ${C.primary}`, background: "transparent", color: C.primary, cursor: "pointer" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Content (offset to the right of the fixed sidebar) ── */}
+      {/* ── Content ── */}
       <div className="r-content" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
 
       {/* ── Topbar ── */}
@@ -727,6 +650,19 @@ export default function JudgeDashboardClient() {
                       </svg>
                       VIEW SUBMISSION
                     </button>
+                    <button
+                      className="r-ghost-btn"
+                      onClick={() => {
+                        window.open("https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing", "_blank", "noopener,noreferrer");
+                      }}
+                      style={{ width: "100%", padding: "8px 0", background: "transparent", border: `1px solid ${C.primary}`, borderRadius: 0, fontFamily: FM, fontSize: 10, fontWeight: 700, color: C.primary, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <rect x="0.5" y="0.5" width="11" height="11" rx="1" stroke="currentColor" strokeWidth="1"/>
+                        <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                      </svg>
+                      VIEW JUDGING GUIDELINES
+                    </button>
                   </div>
 
                   {/* Left: project image + info (Desktop) */}
@@ -791,16 +727,17 @@ export default function JudgeDashboardClient() {
                       {/* View Submission button */}
                       <motion.button
                         onClick={() => setOverlayProject(expandedProject)}
-                        whileHover={{ scale: 1.03, borderColor: C.primary }}
+                        whileHover={{ scale: 1.03, background: "rgba(204,0,0,0.06)" }}
                         whileTap={{ scale: 0.97 }}
                         transition={SPRING}
                         style={{
+                          marginBottom: 14,
                           width: "100%", height: 34,
-                          background: "transparent",
+                          background: "rgba(0,0,0,0)",
                           border: `1px solid ${C.textPrimary}`,
                           fontFamily: FM, fontSize: 11, color: C.textPrimary,
                           cursor: "pointer", letterSpacing: "0.06em",
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          display: "flex", alignItems: "center", justifyContent: "flex-start", paddingLeft: 14, gap: 6,
                           transition: "border-color 0.15s",
                         }}
                       >
@@ -809,6 +746,32 @@ export default function JudgeDashboardClient() {
                           <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
                         </svg>
                         VIEW SUBMISSION
+                      </motion.button>
+
+                      {/* View Judging Guidelines button */}
+                      <motion.button
+                        onClick={() => {
+                          window.open("https://docs.google.com/document/d/1aDKSK-cyRSzGXGyuBM6d5vWxaz7QswsPQnAuoxoW5lI/edit?usp=sharing", "_blank", "noopener,noreferrer");
+                        }}
+                        whileHover={{ scale: 1.03, background: "rgba(204,0,0,0.06)"}}
+                        whileTap={{ scale: 0.97 }}
+                        transition={SPRING}
+                        style={{
+                          width: "100%", height: 34,
+                          background: "rgba(0,0,0,0)",
+                          border: `1px solid`,
+                          borderColor: C.primary,
+                          fontFamily: FM, fontSize: 11, color: C.primary,
+                          cursor: "pointer", letterSpacing: "0.06em",
+                          display: "flex", alignItems: "center", justifyContent: "flex-start", paddingLeft: 14, gap: 6,
+                          transition: "border-color 0.15s",
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <rect x="0.5" y="0.5" width="11" height="11" rx="1" stroke="currentColor" strokeWidth="1"/>
+                          <path d="M3 3h2.5M3 6h6M3 9h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        </svg>
+                        VIEW JUDGING GUIDELINES
                       </motion.button>
                     </div>
                   </div>
