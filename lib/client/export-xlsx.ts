@@ -103,14 +103,16 @@ type Maxima = {
   problem: number;
   innovation: number;
   presentation: number;
+  entrepreneurship: number;
   overall: number;
 };
 
 const DEFAULT_EXPORT_MAXIMA: Maxima = {
-  technical: 30,
-  problem: 25,
-  innovation: 25,
+  technical: 20,
+  problem: 20,
+  innovation: 30,
   presentation: 20,
+  entrepreneurship: 10,
   overall: 100,
 };
 
@@ -177,6 +179,7 @@ function buildTeamBreakdownSheet(
     num(s.problemSolutionFit),
     num(s.innovationCreativity),
     num(s.presentationQuality),
+    num(s.entrepreneurship),
     typeof s.score === "number" ? pctCell(Math.round(s.score * 100) / 100) : "",
     wrapCell(s.comments),
   ]);
@@ -189,6 +192,7 @@ function buildTeamBreakdownSheet(
       { header: `Problem Fit (/${maxima.problem})`,    width: 18 },
       { header: `Innovation (/${maxima.innovation})`,  width: 18 },
       { header: `Presentation (/${maxima.presentation})`, width: 20 },
+      { header: `Entrepreneurship (/${maxima.entrepreneurship})`, width: 20 },
       { header: `Total (/${maxima.overall})`,          width: 15 },
       { header: "Comments",                            width: 50 },
     ],
@@ -206,7 +210,8 @@ function buildJudgeScoresSheet(submissions: AdminSubmission[]): ExcelSheet {
         s.technicalExecution != null ||
         s.problemSolutionFit != null ||
         s.innovationCreativity != null ||
-        s.presentationQuality != null;
+        s.presentationQuality != null ||
+        s.entrepreneurship != null;
       if (!hasAnyScore) continue;
 
       rows.push([
@@ -217,6 +222,7 @@ function buildJudgeScoresSheet(submissions: AdminSubmission[]): ExcelSheet {
         num(s.problemSolutionFit),
         num(s.innovationCreativity),
         num(s.presentationQuality),
+        num(s.entrepreneurship),
         typeof s.score === "number" ? pctCell(Math.round(s.score * 100) / 100) : "",
         wrapCell(s.comments),
       ]);
@@ -233,6 +239,7 @@ function buildJudgeScoresSheet(submissions: AdminSubmission[]): ExcelSheet {
       { header: "Problem / Solution Fit", width: 22 },
       { header: "Innovation / Creativity", width: 22 },
       { header: "Presentation Quality", width: 20 },
+      { header: "Entrepreneurship", width: 20 },
       { header: "Judge Total (%)", width: 16 },
       { header: "Comments", width: 50 },
     ],

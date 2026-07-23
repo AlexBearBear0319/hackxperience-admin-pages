@@ -2,10 +2,11 @@
 import type { ScoreEntry } from "./types";
 
 export const CRITERIA = [
-  { key: "techExec",        label: "Technical Execution",     max: 30 },
-  { key: "problemSolution", label: "Problem-Solution Fit",    max: 25 },
-  { key: "innovation",      label: "Innovation + Creativity", max: 25 },
+  { key: "techExec",        label: "Technical Execution",     max: 20 },
+  { key: "problemSolution", label: "Problem-Solution Fit",    max: 20 },
+  { key: "innovation",      label: "Innovation + Creativity", max: 30 },
   { key: "presentation",    label: "Presentation Quality",    max: 20 },
+  { key: "entrepreneurship",label: "Entrepreneurship",        max: 10 },
 ] as const;
 
 export type CriterionKey = typeof CRITERIA[number]["key"];
@@ -16,7 +17,7 @@ export type ScoringCriterion = {
 };
 
 export function makeBlankScore(): ScoreEntry {
-  return { techExec: "", problemSolution: "", innovation: "", presentation: "", comment: "", saved: false, savedTotal: 0 };
+  return { techExec: "", problemSolution: "", innovation: "", presentation: "", entrepreneurship: "", comment: "", saved: false, savedTotal: 0 };
 }
 
 export function isFieldInvalid(value: string, max: number): boolean {

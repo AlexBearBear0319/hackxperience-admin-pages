@@ -12,6 +12,7 @@ const CRITERION_SUBTITLES: Record<string, string> = {
   problemSolution: "How well the solution addresses the problem and meets user needs.",
   innovation:      "Originality of idea, creative approach, and differentiation.",
   presentation:    "Clarity, structure, delivery, and visual appeal of the presentation.",
+  entrepreneurship: "Market demand, target user adoption, long-term sustainability, and future vision."
 };
 
 function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: string }) {
@@ -32,22 +33,42 @@ function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: str
       )}
       {criteriaKey === "innovation" && (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          {/* Bulb body */}
           <path d="M9 18h6" />
           <path d="M10 21h4" />
-          <path d="M15.5 14c.5-1.5 1.5-2.5 1.5-4a5 5 0 0 0-10 0c0 1.5 1 2.5 1.5 4h7z" />
+          {/* Bulb */}
+          <path d="M15.5 15c.5-1.5 1.5-2.5 1.5-4a5 5 0 0 0-10 0c0 1.5 1 2.5 1.5 4h7z" />
+          {/* Bright effect */}
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="4.5" y1="4.5" x2="6" y2="6" />
           <line x1="19.5" y1="4.5" x2="18" y2="6" />
-          <line x1="1" y1="10" x2="3" y2="10" />
-          <line x1="23" y1="10" x2="21" y2="10" />
+          <line x1="2" y1="11" x2="4" y2="11" />
+          <line x1="22" y1="11" x2="20" y2="11" />
         </svg>
       )}
       {criteriaKey === "presentation" && (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 3h6l1 4H8l1-4z" />
-          <path d="M8 7L3 18" strokeDasharray="2 3" />
-          <path d="M16 7l6 13" strokeDasharray="2 3" />
-          <ellipse cx="12" cy="19" rx="9" ry="2.5" />
+          {/* Screen Frame */}
+          <rect x="3" y="3" width="18" height="12" rx="1" />
+          {/* Slide Content: Mini image box on the left, bullet text lines on the right */}
+          <rect x="5.5" y="5.5" width="4.5" height="4.5" rx="0.5" />
+          <line x1="12" y1="6.5" x2="18.5" y2="6.5" />
+          <line x1="12" y1="9.5" x2="16.5" y2="9.5" />
+          {/* Tripod Legs */}
+          <path d="M12 15v3" />
+          <path d="M8 21l4-3 4 3" />
+        </svg>
+      )}
+      {criteriaKey === "entrepreneurship" && (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          {/* Plant pot */}
+          <path d="M6 14h12l-1.2 6.5H7.2L6 14z" />
+          <path d="M5 10.5h14v3.5H5v-3.5z" />
+          {/* Central stem */}
+          <path d="M12 10.5V5" />
+          {/* Left and right leaves (scaled up slightly) */}
+          <path d="M12 7.5C9.5 7.5 7 5.5 7 2.5c3 0 5 2 5 5z" />
+          <path d="M12 7.5c2.5 0 5-2 5-5-3 0-5 2-5 5z" />
         </svg>
       )}
     </div>

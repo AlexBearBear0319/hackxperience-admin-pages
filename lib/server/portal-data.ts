@@ -24,6 +24,7 @@ export type JudgeScoreRow = {
   problem_solution_fit: number | null;
   innovation_creativity: number | null;
   presentation_quality: number | null;
+  entrepreneurship: number | null;
   private_comment: string | null;
 };
 
@@ -122,6 +123,7 @@ export function totalScore(score: JudgeScoreRow | undefined) {
     score.problem_solution_fit,
     score.innovation_creativity,
     score.presentation_quality,
+    score.entrepreneurship,
   ];
 
   const hasAny = fields.some((value) => typeof value === "number");
