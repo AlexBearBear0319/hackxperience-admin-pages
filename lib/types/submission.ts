@@ -44,6 +44,7 @@ export type SubmissionScore = {
   problemSolutionFit?: number | null;
   innovationCreativity?: number | null;
   presentationQuality?: number | null;
+  entrepreneurship?: number | null;
   comments?: string | null;
 };
 

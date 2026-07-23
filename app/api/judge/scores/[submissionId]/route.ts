@@ -21,6 +21,7 @@ type SettingsRow = {
   problem_solution_fit_value: number;
   innovation_creativity_value: number;
   presentation_quality_value: number;
+  entrepreneurship_value: number;
 };
 
 function parseCriterion(value: unknown, max: number): number | null | "invalid" {
@@ -57,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
   const settingsResult = await supabaseServer
     .from("settings")
-    .select("technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value")
+    .select("technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value,entrepreneurship_value")
     .order("id", { ascending: true })
     .limit(1)
     .maybeSingle<SettingsRow>();
@@ -67,16 +68,18 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 
   const limits = settingsResult.data ?? {
-    technical_execution_value: 30,
-    problem_solution_fit_value: 25,
-    innovation_creativity_value: 25,
+    technical_execution_value: 20,
+    problem_solution_fit_value: 20,
+    innovation_creativity_value: 30,
     presentation_quality_value: 20,
+    entrepreneurship_value: 10,
   };
 
   const technicalExecution = parseCriterion(body?.techExec, limits.technical_execution_value);
   const problemSolutionFit = parseCriterion(body?.problemSolution, limits.problem_solution_fit_value);
   const innovationCreativity = parseCriterion(body?.innovation, limits.innovation_creativity_value);
   const presentationQuality = parseCriterion(body?.presentation, limits.presentation_quality_value);
+  const entrepreneurship = parseCriterion(body?.entrepreneurship, limits.entrepreneurship_value);
   const privateComment =
     typeof body?.comment === "string" && body.comment.trim() ? body.comment.trim() : null;
 
@@ -84,7 +87,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     technicalExecution === "invalid" ||
     problemSolutionFit === "invalid" ||
     innovationCreativity === "invalid" ||
-    presentationQuality === "invalid"
+    presentationQuality === "invalid" ||
+    entrepreneurship === "invalid"
   ) {
     return NextResponse.json({ error: "Invalid score payload." }, { status: 400 });
   }
@@ -127,6 +131,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
           problem_solution_fit: problemSolutionFit,
           innovation_creativity: innovationCreativity,
           presentation_quality: presentationQuality,
+          entrepreneurship: entrepreneurship,
           private_comment: privateComment,
         },
         { onConflict: `${column},submission_id` },

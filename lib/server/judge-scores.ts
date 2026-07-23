@@ -188,6 +188,7 @@ export type NormalizedJudgeScoreRow = {
   problem_solution_fit: number | null;
   innovation_creativity: number | null;
   presentation_quality: number | null;
+  entrepreneurship: number | null;
   private_comment: string | null;
 };
 
@@ -210,6 +211,7 @@ export function normalizeJudgeScoreRows(
         problem_solution_fit: toNullableNumber(row.problem_solution_fit),
         innovation_creativity: toNullableNumber(row.innovation_creativity),
         presentation_quality: toNullableNumber(row.presentation_quality),
+        entrepreneurship: toNullableNumber(row.entrepreneurship),
         private_comment: toNullableString(row.private_comment),
       };
     })
@@ -217,7 +219,7 @@ export function normalizeJudgeScoreRows(
 }
 
 export function selectJudgeScoresColumns(idColumn: JudgeScoresIdColumn) {
-  return `${idColumn},submission_id,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality,private_comment`;
+  return `${idColumn},submission_id,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality,entrepreneurship,private_comment`;
 }
 
 export async function resolveLegacyJudgeId(
