@@ -13,23 +13,26 @@ type JudgeBreakdown = {
   problemSolutionFit: number | null;
   innovationCreativity: number | null;
   presentationQuality: number | null;
+  entrepreneurship: number | null;
   overall: number;
 };
 
-// Per-criterion max points, from settings (e.g. 30/25/25/20, overall 100).
+// Per-criterion max points, from settings (e.g. 20/20/30/20/10, overall 100).
 type ScoreMaxima = {
   technical: number;
   problem: number;
   innovation: number;
   presentation: number;
+  entrepreneurship: number;
   overall: number;
 };
 
 const DEFAULT_MAXIMA: ScoreMaxima = {
-  technical: 30,
-  problem: 25,
-  innovation: 25,
+  technical: 20,
+  problem: 20,
+  innovation: 30,
   presentation: 20,
+  entrepreneurship: 10,
   overall: 100,
 };
 
@@ -86,6 +89,7 @@ function buildProjectRows(submissions: AdminSubmission[]): ProjectRow[] {
         problemSolutionFit: s.problemSolutionFit ?? null,
         innovationCreativity: s.innovationCreativity ?? null,
         presentationQuality: s.presentationQuality ?? null,
+        entrepreneurship: s.entrepreneurship ?? null,
         overall: Math.round(s.score * 100) / 100,
       })),
     });
@@ -122,11 +126,13 @@ export default function ResultsClient() {
           problem: s.problem_solution_fit_value,
           innovation: s.innovation_creativity_value,
           presentation: s.presentation_quality_value,
+          entrepreneurship: s.entrepreneurship_value,
           overall:
             s.technical_execution_value +
             s.problem_solution_fit_value +
             s.innovation_creativity_value +
-            s.presentation_quality_value,
+            s.presentation_quality_value +
+            s.entrepreneurship_value,
         });
       }
     } catch (loadError) {
@@ -242,6 +248,7 @@ export default function ResultsClient() {
                           <span className={styles.breakdownNum}>PROBLEM_FIT</span>
                           <span className={styles.breakdownNum}>INNOVATION</span>
                           <span className={styles.breakdownNum}>PRESENTATION</span>
+                          <span className={styles.breakdownNum}>ENTREPRENEURSHIP</span>
                           <span className={styles.breakdownNum}>OVERALL</span>
                         </div>
                         {row.breakdowns.map((bd) => (
@@ -253,6 +260,7 @@ export default function ResultsClient() {
                             <span className={styles.breakdownNum}>{fmtScore(bd.problemSolutionFit, maxima.problem)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.innovationCreativity, maxima.innovation)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.presentationQuality, maxima.presentation)}</span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.entrepreneurship, maxima.entrepreneurship)}</span>
                             <span className={`${styles.breakdownNum} ${styles.breakdownScore}`}>
                               {bd.overall}/{maxima.overall}
                             </span>

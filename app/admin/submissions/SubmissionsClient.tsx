@@ -296,12 +296,14 @@ function ScoreModal({ target, onClose }: { target: ScoreTarget; onClose: () => v
   const probAvg    = avg(scored.map((s) => s.problemSolutionFit));
   const innoAvg    = avg(scored.map((s) => s.innovationCreativity));
   const presAvg    = avg(scored.map((s) => s.presentationQuality));
+  const entrAvg   = avg(scored.map((s) => s.entrepreneurship));
 
   const criteria = [
     { label: "TECH_EXECUTION",    value: techAvg },
     { label: "PROB_SOLUTION_FIT", value: probAvg },
     { label: "INNOVATION",        value: innoAvg },
     { label: "PRESENTATION",      value: presAvg },
+    { label: "ENTREPRENEURSHIP",  value: entrAvg },
   ];
 
   return (
