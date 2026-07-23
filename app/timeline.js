@@ -15,15 +15,15 @@ const EVENTS = [
   {
     date: '24 JUL 2026',
     title: 'OPENING CEREMONY',
-    time: '',
-    meta: 'SIM CAMPUS',
-    endsAt: '2026-07-24T23:59:59+08:00',
+    time: '10:30 AM - 11:30 AM',
+    meta: 'SIM CAMPUS · A.1.20',
+    endsAt: '2026-07-24T11:30:00+08:00',
   },
   {
     date: '24–25 JUL 2026',
     title: 'HACKING PERIOD',
-    time: '',
-    meta: 'SIM CAMPUS',
+    time: '12:00 PM (24 JUL) - 12:00 PM (25 JUL)',
+    meta: 'SIM CAMPUS · B.5.12/13 & B.2.07/08',
     endsAt: '2026-07-25T12:00:00+08:00',
   },
   {
@@ -36,9 +36,9 @@ const EVENTS = [
   {
     date: '25 JUL 2026',
     title: 'JUDGING + WINNERS',
-    time: '',
+    time: '1:00 PM - 6:00 PM',
     meta: 'SIM CAMPUS',
-    endsAt: '2026-07-25T23:59:59+08:00',
+    endsAt: '2026-07-25T18:00:00+08:00',
   },
 ]
 
@@ -267,8 +267,8 @@ function TimelineItem({ date, title, time, meta, isLast, isPassed, isNext }) {
           {title}
         </div>
 
-        {!isPending && time && <Meta>{time} // {meta}</Meta>}
-        {!isPending && !time && meta && <Meta>{meta}</Meta>}
+        {time && <Meta>{time} // {meta}</Meta>}
+        {!time && meta && <Meta>{meta}</Meta>}
 
         {!isPending && !isPassed && calendarLink && calendarLink !== '#' && (
           <div className="mt-4">

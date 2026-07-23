@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
-import { type AdminSubmission, HACKX_TRACKS } from "@/lib/types";
+import { type AdminSubmission } from "@/lib/types";
 import { fetchAdminSubmissions } from "@/lib/client/admin-api";
 import { usePortalSettings } from "../components/PortalSettingsContext";
 import ActivityLogsClient from "./activity-logs/ActivityLogsClient";
@@ -149,15 +149,27 @@ function HpTrackRow({
   );
 }
 
-function TrackChart({ submissions }: { submissions: AdminSubmission[] }) {
-  const dynamicTracks = Array.from(new Set(submissions.map((s) => s.track).filter(Boolean)));
-  const trackOrder = Array.from(new Set([...HACKX_TRACKS, ...dynamicTracks]));
+function TrackChart({
+  submissions,
+  activeTracks,
+}: {
+  submissions: AdminSubmission[];
+  activeTracks: string[];
+}) {
   const totalCount = submissions.length;
-  const counts = trackOrder.map((track) => ({
+  const counts = activeTracks.map((track) => ({
     track,
     count: submissions.filter((s) => s.track === track).length,
   }));
   const maxCount = Math.max(0, ...counts.map((c) => c.count));
+
+  if (activeTracks.length === 0) {
+    return (
+      <div className={styles.hpWrap}>
+        <p className={styles.hpDetails}>No active tracks configured in settings.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.hpWrap}>
@@ -178,8 +190,13 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
   const [data, setData] = useState<AdminSubmission[]>(emptySubmissions);
   const [exportingKind, setExportingKind] = useState<ExportKind | null>(null);
   const router = useRouter();
-  const { submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions } =
-    usePortalSettings();
+  const {
+    submissionsOpen,
+    allowResubmissions,
+    activeTracks,
+    toggleSubmissionsOpen,
+    toggleAllowResubmissions,
+  } = usePortalSettings();
   const shellMetrics = useMemo(() => buildMetrics(data), [data]);
 
   useEffect(() => {
@@ -236,7 +253,7 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
       <div className={styles.dashboardGrid}>
         <section className={styles.chartPanel}>
           <SectionHeader title="SUBMISSIONS_BY_TRACK" />
-          <TrackChart submissions={data} />
+          <TrackChart submissions={data} activeTracks={activeTracks} />
         </section>
 
         <section className={styles.quickPanel}>
