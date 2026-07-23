@@ -6,6 +6,7 @@ import { fetchAdminSettings, updateAdminSettings } from "@/lib/client/admin-api"
 type PortalSettings = {
   submissionsOpen: boolean;
   allowResubmissions: boolean;
+  activeTracks: string[];
 };
 
 type PortalSettingsContextValue = PortalSettings & {
@@ -24,6 +25,7 @@ export function usePortalSettings() {
 export function PortalSettingsProvider({ children }: { children: ReactNode }) {
   const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const [allowResubmissions, setAllowResubmissions] = useState(true);
+  const [activeTracks, setActiveTracks] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +36,11 @@ export function PortalSettingsProvider({ children }: { children: ReactNode }) {
         if (cancelled || !payload.settings) return;
         setSubmissionsOpen(payload.settings.submission_status);
         setAllowResubmissions(payload.settings.resubmission_status);
+        setActiveTracks(
+          Array.isArray(payload.settings.active_tracks)
+            ? payload.settings.active_tracks.filter((item): item is string => typeof item === "string")
+            : [],
+        );
       } catch {
         // Keep local defaults when settings endpoint isn't available.
       }
@@ -66,8 +73,14 @@ export function PortalSettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions }),
-    [submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions],
+    () => ({
+      submissionsOpen,
+      allowResubmissions,
+      activeTracks,
+      toggleSubmissionsOpen,
+      toggleAllowResubmissions,
+    }),
+    [submissionsOpen, allowResubmissions, activeTracks, toggleSubmissionsOpen, toggleAllowResubmissions],
   );
 
   return <PortalSettingsContext.Provider value={value}>{children}</PortalSettingsContext.Provider>;
