@@ -47,8 +47,7 @@ export const RESPONSIVE_CSS = `
     .r-hero-meta { gap: 10px 20px !important; margin-top: 10px !important; }
   }
 
-  /* Body layout — fixed sidebar + offset content (mirrors admin) */
-  .r-content { margin-left: 256px; }
+  /* Body layout */
   @media (max-width: 1024px) {
     .r-content { margin-left: 0 !important; }
     .r-sidebar { display: none !important; }
