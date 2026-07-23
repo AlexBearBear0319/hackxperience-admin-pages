@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { usePortalSettings } from "../components/PortalSettingsContext";
-import { type AdminSubmission } from "@/lib/types";
+import { HACKX_TRACKS, type AdminSubmission } from "@/lib/types";
 import {
   createAdminJudge,
   deleteAdminJudge,
@@ -362,27 +362,59 @@ function JudgingCriteriaPanel({
 }
 
 function TracksPanel({
-  tracks,
-  onAddTrack,
-  onRemoveTrack,
+  activeTracks,
+  onToggleTrack,
+  onDeleteTrack,
 }: {
-  tracks: string[];
-  onAddTrack: (track: string) => void;
-  onRemoveTrack: (track: string) => void;
+  activeTracks: Set<string>;
+  onToggleTrack: (track: string) => void;
+  onDeleteTrack: (track: string) => void;
 }) {
   const [newTrackInput, setNewTrackInput] = useState("");
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
+  // Local list of custom track names — persists even when a custom track is toggled off,
+  // so the row stays visible and only an explicit [ X ] removes it entirely.
+  const [localCustomTracks, setLocalCustomTracks] = useState<string[]>(() =>
+    Array.from(activeTracks).filter(
+      (t) => !HACKX_TRACKS.includes(t as (typeof HACKX_TRACKS)[number]),
+    ),
+  );
+
+  // Merge server-side custom tracks that arrive after the initial load (e.g. settings fetch).
+  useEffect(() => {
+    setLocalCustomTracks((prev) => {
+      const incoming = Array.from(activeTracks).filter(
+        (t) => !HACKX_TRACKS.includes(t as (typeof HACKX_TRACKS)[number]),
+      );
+      const next = [...prev];
+      for (const t of incoming) {
+        if (!next.includes(t)) next.push(t);
+      }
+      return next.length === prev.length && next.every((t, i) => t === prev[i]) ? prev : next;
+    });
+  }, [activeTracks]);
+
+  const allTracks = useMemo(
+    () => [...HACKX_TRACKS, ...localCustomTracks],
+    [localCustomTracks],
+  );
+
   function handleAdd() {
     const trimmed = newTrackInput.trim();
-    if (!trimmed || tracks.includes(trimmed)) return;
-    onAddTrack(trimmed);
+    const alreadyExists =
+      HACKX_TRACKS.includes(trimmed as (typeof HACKX_TRACKS)[number]) ||
+      localCustomTracks.includes(trimmed);
+    if (!trimmed || alreadyExists) return;
+    setLocalCustomTracks((prev) => [...prev, trimmed]);
+    if (!activeTracks.has(trimmed)) onToggleTrack(trimmed);
     setNewTrackInput("");
   }
 
   function handleConfirmDelete() {
     if (!pendingDelete) return;
-    onRemoveTrack(pendingDelete);
+    onDeleteTrack(pendingDelete);
+    setLocalCustomTracks((prev) => prev.filter((t) => t !== pendingDelete));
     setPendingDelete(null);
   }
 
@@ -392,11 +424,10 @@ function TracksPanel({
         <h3>&gt; TRACKS</h3>
       </div>
       <div className={styles.panelBody}>
-        {tracks.length === 0 && (
-          <p className={styles.sessionFieldLabel}>No active tracks yet. Add one below.</p>
-        )}
-        {tracks.map((track, index) => {
+        {allTracks.map((track, index) => {
           const id = `TRACK_${String(index + 1).padStart(2, "0")}`;
+          const enabled = activeTracks.has(track);
+          const isCustom = !HACKX_TRACKS.includes(track as (typeof HACKX_TRACKS)[number]);
           return (
             <div key={track} className={styles.trackRow}>
               <div className={styles.trackInfo}>
@@ -404,14 +435,17 @@ function TracksPanel({
                 <div className={styles.trackName}>{track}</div>
               </div>
               <div className={styles.trackActions}>
-                <button
-                  type="button"
-                  className={styles.removeTrackBtn}
-                  onClick={() => setPendingDelete(track)}
-                  aria-label={`Remove track ${track}`}
-                >
-                  [ X ]
-                </button>
+                {isCustom && (
+                  <button
+                    type="button"
+                    className={styles.removeTrackBtn}
+                    onClick={() => setPendingDelete(track)}
+                    aria-label={`Delete track ${track}`}
+                  >
+                    [ X ]
+                  </button>
+                )}
+                <Toggle on={enabled} onToggle={() => onToggleTrack(track)} label={`Toggle ${id}`} />
               </div>
             </div>
           );
@@ -431,7 +465,11 @@ function TracksPanel({
             type="button"
             className={styles.trackAddBtn}
             onClick={handleAdd}
-            disabled={!newTrackInput.trim() || tracks.includes(newTrackInput.trim())}
+            disabled={
+              !newTrackInput.trim() ||
+              HACKX_TRACKS.includes(newTrackInput.trim() as (typeof HACKX_TRACKS)[number]) ||
+              localCustomTracks.includes(newTrackInput.trim())
+            }
           >
             [ ADD ]
           </button>
@@ -817,20 +855,29 @@ export default function SettingsClient() {
   ], [settings]);
 
   const activeTracks = useMemo(
-    () =>
+    () => new Set(
       Array.isArray(settings?.active_tracks)
         ? settings.active_tracks.filter((item): item is string => typeof item === "string")
         : [],
-    [settings?.active_tracks]
+    ),
+    [settings?.active_tracks],
   );
 
-  const handleAddTrack = useCallback((track: string) => {
-    if (activeTracks.includes(track)) return;
-    void patchSettings({ active_tracks: [...activeTracks, track] });
+  const handleToggleTrack = useCallback((track: string) => {
+    const next = new Set(activeTracks);
+    if (next.has(track)) {
+      next.delete(track);
+    } else {
+      next.add(track);
+    }
+    void patchSettings({ active_tracks: Array.from(next) });
   }, [activeTracks, patchSettings]);
 
-  const handleRemoveTrack = useCallback((track: string) => {
-    void patchSettings({ active_tracks: activeTracks.filter((t) => t !== track) });
+  const handleDeleteTrack = useCallback((track: string) => {
+    if (!activeTracks.has(track)) return;
+    void patchSettings({
+      active_tracks: Array.from(activeTracks).filter((t) => t !== track),
+    });
   }, [activeTracks, patchSettings]);
 
   const handleCreateJudge = useCallback(async (payload: { username: string; password: string }) => {
@@ -902,9 +949,9 @@ export default function SettingsClient() {
         />
 
         <TracksPanel
-          tracks={activeTracks}
-          onAddTrack={handleAddTrack}
-          onRemoveTrack={handleRemoveTrack}
+          activeTracks={activeTracks}
+          onToggleTrack={handleToggleTrack}
+          onDeleteTrack={handleDeleteTrack}
         />
 
         <AdminSessionPanel
