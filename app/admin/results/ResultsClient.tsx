@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import type { AdminSubmission, SubmissionScore } from "@/lib/types";
 import { fetchAdminSubmissions, fetchAdminSettings } from "@/lib/client/admin-api";
+import { criterionDisplayMaxima, parseCriterionWeights } from "@/lib/scoring";
 import styles from "./Results.module.css";
 
 type JudgeBreakdown = {
@@ -17,7 +18,7 @@ type JudgeBreakdown = {
   overall: number;
 };
 
-// Per-criterion max points, from settings (e.g. 20/20/30/20/10, overall 100).
+// Per-criterion display max is always /100; overall is sum of weights.
 type ScoreMaxima = {
   technical: number;
   problem: number;
@@ -27,16 +28,9 @@ type ScoreMaxima = {
   overall: number;
 };
 
-const DEFAULT_MAXIMA: ScoreMaxima = {
-  technical: 20,
-  problem: 20,
-  innovation: 30,
-  presentation: 20,
-  entrepreneurship: 10,
-  overall: 100,
-};
+const DEFAULT_MAXIMA: ScoreMaxima = criterionDisplayMaxima();
 
-/** "given/max" — e.g. 22/30; shows "—/30" when the criterion wasn't scored. */
+/** "given/max" — e.g. 72/100; shows "—/100" when the criterion wasn't scored. */
 function fmtScore(value: number | null, max: number): string {
   return `${typeof value === "number" ? value : "—"}/${max}`;
 }
@@ -74,8 +68,8 @@ function buildProjectRows(submissions: AdminSubmission[]): ProjectRow[] {
     if (scored.length === 0) continue;
 
     const totalRaw = scored.reduce((sum, s) => sum + s.score, 0);
-    // Judge totals are already on a 0–100 scale (criteria capped at weights),
-    // so the average is the final score — just round to 2 decimals.
+    // Judge totals are already weighted onto the 0–overall scale
+    // (criteria entered 0–100, then × weight%).
     const aveScore = Math.round((totalRaw / scored.length) * 100) / 100;
 
     rows.push({
@@ -121,19 +115,17 @@ export default function ResultsClient() {
 
       const s = settingsResult?.settings;
       if (s) {
-        setMaxima({
-          technical: s.technical_execution_value,
-          problem: s.problem_solution_fit_value,
-          innovation: s.innovation_creativity_value,
-          presentation: s.presentation_quality_value,
-          entrepreneurship: s.entrepreneurship_value,
-          overall:
-            s.technical_execution_value +
-            s.problem_solution_fit_value +
-            s.innovation_creativity_value +
-            s.presentation_quality_value +
-            s.entrepreneurship_value,
-        });
+        setMaxima(
+          criterionDisplayMaxima(
+            parseCriterionWeights({
+              technical_execution_value: s.technical_execution_value,
+              problem_solution_fit_value: s.problem_solution_fit_value,
+              innovation_creativity_value: s.innovation_creativity_value,
+              presentation_quality_value: s.presentation_quality_value,
+              entrepreneurship_value: s.entrepreneurship_value,
+            }),
+          ),
+        );
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load aggregate scores.");

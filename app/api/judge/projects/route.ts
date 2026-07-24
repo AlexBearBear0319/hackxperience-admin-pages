@@ -4,6 +4,10 @@ import { verifyRoleMapping } from "@/lib/auth/role-mapping";
 import { supabaseServer } from "@/lib/supabase-server";
 import { mapSubmissionToJudgeProject, totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
 import {
+  DEFAULT_CRITERION_WEIGHTS,
+  parseCriterionWeights,
+} from "@/lib/scoring";
+import {
   isJudgeScoreActorIdError,
   type JudgeScoresIdColumn,
   normalizeJudgeScoreRows,
@@ -74,10 +78,19 @@ export async function GET(request: NextRequest) {
       .order("submitted_at", { ascending: false }),
     supabaseServer
       .from("settings")
-      .select("submission_status")
+      .select(
+        "submission_status,technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value,entrepreneurship_value",
+      )
       .order("id", { ascending: true })
       .limit(1)
-      .maybeSingle<{ submission_status: boolean }>(),
+      .maybeSingle<{
+        submission_status: boolean;
+        technical_execution_value: number | null;
+        problem_solution_fit_value: number | null;
+        innovation_creativity_value: number | null;
+        presentation_quality_value: number | null;
+        entrepreneurship_value: number | null;
+      }>(),
   ]);
 
   if (submissionsResult.error) {
@@ -125,6 +138,7 @@ export async function GET(request: NextRequest) {
   const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
   const scoreRows = Array.from(scoreRowsBySubmission.values());
   const savedScores: Record<string, JudgeSavedScore> = {};
+  const weights = parseCriterionWeights(settingsResult.data, DEFAULT_CRITERION_WEIGHTS);
 
   for (const row of scoreRows) {
     savedScores[row.submission_id] = {
@@ -134,7 +148,7 @@ export async function GET(request: NextRequest) {
       presentation_quality: row.presentation_quality,
       entrepreneurship: row.entrepreneurship,
       private_comment: row.private_comment,
-      total: totalScore(row),
+      total: totalScore(row, weights),
     };
   }
 

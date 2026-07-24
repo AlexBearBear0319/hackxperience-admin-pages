@@ -11,6 +11,11 @@ import {
   resolveJudgeScoresIdColumns,
   selectJudgeScoresColumns,
 } from "@/lib/server/judge-scores";
+import {
+  CRITERION_SCORE_MAX,
+  DEFAULT_CRITERION_WEIGHTS,
+  parseCriterionWeights,
+} from "@/lib/scoring";
 
 type RouteContext = {
   params: Promise<{ submissionId: string }>;
@@ -24,7 +29,7 @@ type SettingsRow = {
   entrepreneurship_value: number;
 };
 
-function parseCriterion(value: unknown, max: number): number | null | "invalid" {
+function parseCriterion(value: unknown, max: number = CRITERION_SCORE_MAX): number | null | "invalid" {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   if (!Number.isInteger(n) || n < 0 || n > max) return "invalid";
@@ -67,19 +72,14 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: settingsResult.error.message }, { status: 500 });
   }
 
-  const limits = settingsResult.data ?? {
-    technical_execution_value: 20,
-    problem_solution_fit_value: 20,
-    innovation_creativity_value: 30,
-    presentation_quality_value: 20,
-    entrepreneurship_value: 10,
-  };
+  const weights = parseCriterionWeights(settingsResult.data, DEFAULT_CRITERION_WEIGHTS);
 
-  const technicalExecution = parseCriterion(body?.techExec, limits.technical_execution_value);
-  const problemSolutionFit = parseCriterion(body?.problemSolution, limits.problem_solution_fit_value);
-  const innovationCreativity = parseCriterion(body?.innovation, limits.innovation_creativity_value);
-  const presentationQuality = parseCriterion(body?.presentation, limits.presentation_quality_value);
-  const entrepreneurship = parseCriterion(body?.entrepreneurship, limits.entrepreneurship_value);
+  // Each criterion is scored 0–100; settings values are weights for the total.
+  const technicalExecution = parseCriterion(body?.techExec);
+  const problemSolutionFit = parseCriterion(body?.problemSolution);
+  const innovationCreativity = parseCriterion(body?.innovation);
+  const presentationQuality = parseCriterion(body?.presentation);
+  const entrepreneurship = parseCriterion(body?.entrepreneurship);
   const privateComment =
     typeof body?.comment === "string" && body.comment.trim() ? body.comment.trim() : null;
 
@@ -168,7 +168,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: lastErrorMessage }, { status: 500 });
   }
 
-  const scoreTotal = totalScore(savedRow);
+  const scoreTotal = totalScore(savedRow, weights);
 
   void insertSubmissionLog({
     submissionId,

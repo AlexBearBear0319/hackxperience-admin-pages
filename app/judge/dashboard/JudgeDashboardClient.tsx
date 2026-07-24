@@ -59,27 +59,32 @@ export default function JudgeDashboardClient() {
       {
         key: "techExec",
         label: "Technical Execution",
-        max: Math.max(0, Math.round(settings.technical_execution_value)),
+        weight: Math.max(0, Math.round(settings.technical_execution_value)),
+        max: 100,
       },
       {
         key: "problemSolution",
         label: "Problem-Solution Fit",
-        max: Math.max(0, Math.round(settings.problem_solution_fit_value)),
+        weight: Math.max(0, Math.round(settings.problem_solution_fit_value)),
+        max: 100,
       },
       {
         key: "innovation",
         label: "Innovation & Creativity",
-        max: Math.max(0, Math.round(settings.innovation_creativity_value)),
+        weight: Math.max(0, Math.round(settings.innovation_creativity_value)),
+        max: 100,
       },
       {
         key: "presentation",
         label: "Presentation Quality",
-        max: Math.max(0, Math.round(settings.presentation_quality_value)),
+        weight: Math.max(0, Math.round(settings.presentation_quality_value)),
+        max: 100,
       },
       {
         key: "entrepreneurship",
         label: "Entrepreneurship",
-        max: Math.max(0, Math.round(settings.entrepreneurship_value)),
+        weight: Math.max(0, Math.round(settings.entrepreneurship_value)),
+        max: 100,
       },
     ],
     [

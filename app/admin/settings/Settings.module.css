@@ -76,6 +76,15 @@
   flex: 1;
 }
 
+.criteriaHint {
+  margin: 0;
+  color: #7a7669;
+  font-family: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
 /* ── Config rows (label + control) ───────────── */
 
 .configRow {

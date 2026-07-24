@@ -14,6 +14,10 @@ import {
 } from "@/lib/server/judge-scores";
 import { usernameFromSupabaseEmail } from "@/lib/auth/portal-identity";
 import type { SubmissionRow } from "@/lib/types";
+import {
+  DEFAULT_CRITERION_WEIGHTS,
+  parseCriterionWeights,
+} from "@/lib/scoring";
 
 type JudgeRoleRow = {
   id: number | string;
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const [submissionsResult, scoreRowsResult, judgeRolesResult] = await Promise.all([
+  const [submissionsResult, scoreRowsResult, judgeRolesResult, settingsResult] = await Promise.all([
     supabaseServer
       .from("submissions")
       .select("*")
@@ -89,6 +93,14 @@ export async function GET(request: NextRequest) {
       .select("id,user_id,role")
       .ilike("role", JUDGE_ROLE)
       .order("id", { ascending: true }),
+    supabaseServer
+      .from("settings")
+      .select(
+        "technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value,entrepreneurship_value",
+      )
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (submissionsResult.error) {
@@ -97,6 +109,11 @@ export async function GET(request: NextRequest) {
   if (scoreRowsResult.error) {
     return NextResponse.json({ error: scoreRowsResult.error.message }, { status: 500 });
   }
+  if (settingsResult.error) {
+    return NextResponse.json({ error: settingsResult.error.message }, { status: 500 });
+  }
+
+  const weights = parseCriterionWeights(settingsResult.data, DEFAULT_CRITERION_WEIGHTS);
 
   const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
   const scoreRows = normalizeJudgeScoreRows(
@@ -170,7 +187,7 @@ export async function GET(request: NextRequest) {
       const row = rowByJudgeUsername.get(judgeId);
       return {
         judgeId,
-        score: totalScore(row),
+        score: totalScore(row, weights),
         technicalExecution:  row?.technical_execution  ?? null,
         problemSolutionFit:  row?.problem_solution_fit  ?? null,
         innovationCreativity: row?.innovation_creativity ?? null,
