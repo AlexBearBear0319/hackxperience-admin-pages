@@ -299,9 +299,9 @@ function ScoreModal({ target, onClose }: { target: ScoreTarget; onClose: () => v
   const entrAvg   = avg(scored.map((s) => s.entrepreneurship));
 
   const criteria = [
+    { label: "INNOVATION",        value: innoAvg },
     { label: "TECH_EXECUTION",    value: techAvg },
     { label: "PROB_SOLUTION_FIT", value: probAvg },
-    { label: "INNOVATION",        value: innoAvg },
     { label: "PRESENTATION",      value: presAvg },
     { label: "ENTREPRENEURSHIP",  value: entrAvg },
   ];

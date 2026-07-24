@@ -600,9 +600,9 @@ export default function SponsorJudgeScoresClient() {
                     <th>Project</th>
                     <th>Team ID</th>
                     <th>Track</th>
+                    <th className="sp-scores-num" title="Innovation & Creativity">Innov</th>
                     <th className="sp-scores-num" title="Technical Execution">Tech</th>
                     <th className="sp-scores-num" title="Problem-Solution Fit">Problem</th>
-                    <th className="sp-scores-num" title="Innovation & Creativity">Innov</th>
                     <th className="sp-scores-num" title="Presentation Quality">Present</th>
                     <th className="sp-scores-num" title="Entrepreneurship">Entrep</th>
                     <th className="sp-scores-num">Overall</th>
@@ -624,13 +624,13 @@ export default function SponsorJudgeScoresClient() {
                         <TrackPill track={project.track} />
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
+                        {fmtAvg(project.criteria.innovation)}
+                      </td>
+                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
                         {fmtAvg(project.criteria.technical)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
                         {fmtAvg(project.criteria.problem)}
-                      </td>
-                      <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.innovation)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
                         {fmtAvg(project.criteria.presentation)}

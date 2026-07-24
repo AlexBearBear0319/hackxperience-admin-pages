@@ -236,9 +236,9 @@ export default function ResultsClient() {
                       <div className={styles.breakdownGrid}>
                         <div className={styles.breakdownHeader}>
                           <span>// JUDGE_ID</span>
+                          <span className={styles.breakdownNum}>INNOVATION</span>
                           <span className={styles.breakdownNum}>TECHNICAL</span>
                           <span className={styles.breakdownNum}>PROBLEM_FIT</span>
-                          <span className={styles.breakdownNum}>INNOVATION</span>
                           <span className={styles.breakdownNum}>PRESENTATION</span>
                           <span className={styles.breakdownNum}>ENTREPRENEURSHIP</span>
                           <span className={styles.breakdownNum}>OVERALL</span>
@@ -248,9 +248,9 @@ export default function ResultsClient() {
                             <span className={styles.breakdownJudge}>
                               {bd.judgeId.toUpperCase()}
                             </span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.innovationCreativity, maxima.innovation)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.technicalExecution, maxima.technical)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.problemSolutionFit, maxima.problem)}</span>
-                            <span className={styles.breakdownNum}>{fmtScore(bd.innovationCreativity, maxima.innovation)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.presentationQuality, maxima.presentation)}</span>
                             <span className={styles.breakdownNum}>{fmtScore(bd.entrepreneurship, maxima.entrepreneurship)}</span>
                             <span className={`${styles.breakdownNum} ${styles.breakdownScore}`}>

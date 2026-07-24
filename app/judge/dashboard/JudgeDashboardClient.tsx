@@ -57,6 +57,12 @@ export default function JudgeDashboardClient() {
   const scoringCriteria = useMemo<readonly ScoringCriterion[]>(
     () => [
       {
+        key: "innovation",
+        label: "Innovation & Creativity",
+        weight: Math.max(0, Math.round(settings.innovation_creativity_value)),
+        max: 100,
+      },
+      {
         key: "techExec",
         label: "Technical Execution",
         weight: Math.max(0, Math.round(settings.technical_execution_value)),
@@ -66,12 +72,6 @@ export default function JudgeDashboardClient() {
         key: "problemSolution",
         label: "Problem-Solution Fit",
         weight: Math.max(0, Math.round(settings.problem_solution_fit_value)),
-        max: 100,
-      },
-      {
-        key: "innovation",
-        label: "Innovation & Creativity",
-        weight: Math.max(0, Math.round(settings.innovation_creativity_value)),
         max: 100,
       },
       {
