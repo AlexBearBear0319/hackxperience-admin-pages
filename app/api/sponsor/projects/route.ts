@@ -15,6 +15,12 @@ import {
   type SponsorScoreRow,
   type TrackPlace,
 } from "@/lib/server/sponsor-awards";
+import {
+  CRITERION_SCORE_MAX,
+  DEFAULT_CRITERION_WEIGHTS,
+  parseCriterionWeights,
+  type CriterionWeights,
+} from "@/lib/scoring";
 
 type JudgeCriterionRow = {
   submission_id: string;
@@ -46,17 +52,19 @@ function averageCriterion(
   return sum / values.length;
 }
 
-/** Scale criterion average onto 0–100 using the admin settings max for that criterion. */
-function normalizeToHundred(avg: number | null, maxPoints: number): number | null {
-  if (avg == null || maxPoints <= 0) return null;
-  const scaled = (avg / maxPoints) * 100;
-  return Math.round(scaled * 10) / 10;
+/** Criterion scores are already 0–100; round for display. */
+function normalizeToHundred(avg: number | null): number | null {
+  if (avg == null) return null;
+  return Math.round(avg * 10) / 10;
 }
 
-/** Average of each judge's weighted overall total (criteria already capped at settings weights). */
-function averageOverallJudgeScore(rows: JudgeCriterionRow[]): number | null {
+/** Average of each judge's weighted overall total (0–100 criterion scores × settings weights). */
+function averageOverallJudgeScore(
+  rows: JudgeCriterionRow[],
+  weights: CriterionWeights,
+): number | null {
   const totals = rows
-    .map((row) => totalScore(row as JudgeScoreRow))
+    .map((row) => totalScore(row as JudgeScoreRow, weights))
     .filter((value): value is number => typeof value === "number");
   if (totals.length === 0) return null;
   const sum = totals.reduce((acc, n) => acc + n, 0);
@@ -109,12 +117,17 @@ export async function GET(request: NextRequest) {
       .eq("award", award),
     supabaseServer
       .from("settings")
-      .select("entrepreneurship_value,technical_execution_value")
+      .select(
+        "entrepreneurship_value,technical_execution_value,problem_solution_fit_value,innovation_creativity_value,presentation_quality_value",
+      )
       .order("id", { ascending: true })
       .limit(1)
       .maybeSingle<{
         entrepreneurship_value: number | null;
         technical_execution_value: number | null;
+        problem_solution_fit_value: number | null;
+        innovation_creativity_value: number | null;
+        presentation_quality_value: number | null;
       }>(),
   ]);
 
@@ -131,10 +144,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: settingsResult.error.message }, { status: 500 });
   }
 
-  const criterionMax =
-    criterion === "entrepreneurship"
-      ? Math.max(0, Math.round(settingsResult.data?.entrepreneurship_value ?? 10))
-      : Math.max(0, Math.round(settingsResult.data?.technical_execution_value ?? 20));
+  const weights = parseCriterionWeights(settingsResult.data, DEFAULT_CRITERION_WEIGHTS);
+  const criterionMax = CRITERION_SCORE_MAX;
 
   const allSubmissions = (allSubmissionsResult.data ?? []) as SubmissionRow[];
   const judgeRows = (scoresResult.data ?? []) as JudgeCriterionRow[];
@@ -152,7 +163,7 @@ export async function GET(request: NextRequest) {
   for (const row of allSubmissions) {
     overallBySubmission.set(
       row.id,
-      averageOverallJudgeScore(judgeRowsBySubmission.get(row.id) ?? []),
+      averageOverallJudgeScore(judgeRowsBySubmission.get(row.id) ?? [], weights),
     );
   }
 
@@ -206,7 +217,6 @@ export async function GET(request: NextRequest) {
         usesMicrosoftFoundry: Boolean(row.uses_microsoft_foundry),
         judgeAvg: normalizeToHundred(
           averageCriterion(judgeRowsBySubmission.get(row.id) ?? [], criterion),
-          criterionMax,
         ),
         overallJudgeAvg: overallBySubmission.get(row.id) ?? null,
         trackPlace: trackPlaces.get(row.id) ?? null,

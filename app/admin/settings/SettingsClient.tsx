@@ -307,6 +307,9 @@ function JudgingCriteriaPanel({
         <h3>&gt; JUDGING_CRITERIA</h3>
       </div>
       <div className={styles.panelBody}>
+        <p className={styles.criteriaHint}>
+          Judges score each criterion out of 100. Values below are weight % for the final total.
+        </p>
         {criteria.map((criterion) => (
           <div key={criterion.key} className={styles.criteriaRow}>
             <span className={styles.criteriaLabel}>{criterion.label}</span>
@@ -318,9 +321,9 @@ function JudgingCriteriaPanel({
                   className={`${styles.numberInput}${errors[criterion.key] ? ` ${styles.numberInputError}` : ""}`}
                   value={rawValues[criterion.key] ?? ""}
                   onChange={(e) => handleChange(criterion.key, e.target.value)}
-                  aria-label={`${criterion.label} max points`}
+                  aria-label={`${criterion.label} weight percent`}
                 />
-                <span className={styles.inputUnit}>pts</span>
+                <span className={styles.inputUnit}>%</span>
               </div>
               {errors[criterion.key] && (
                 <span className={styles.inputErrorMsg}>&gt;&gt; [ERR: INTEGER_REQUIRED]</span>
@@ -329,7 +332,7 @@ function JudgingCriteriaPanel({
           </div>
         ))}
         <p className={styles.criteriaTotal}>
-          TOTAL <strong>{total}</strong> pts
+          TOTAL WEIGHT <strong>{total}</strong>%
         </p>
       </div>
       <div className={styles.panelFooter}>

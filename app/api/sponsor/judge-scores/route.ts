@@ -5,6 +5,12 @@ import { supabaseServer } from "@/lib/supabase-server";
 import type { SubmissionRow } from "@/lib/types";
 import { totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
 import { isUuid, rankTrackPlaces, type TrackPlace } from "@/lib/server/sponsor-awards";
+import {
+  CRITERION_SCORE_MAX,
+  DEFAULT_CRITERION_WEIGHTS,
+  criterionDisplayMaxima,
+  parseCriterionWeights,
+} from "@/lib/scoring";
 
 type CriterionKey =
   | "technical_execution"
@@ -61,13 +67,16 @@ function averageCriteria(rows: JudgeCriterionRow[]): CriterionAverages {
   };
 }
 
-/** Average of each judge's weighted overall total (criteria already capped at settings weights). */
-function averageOverallJudgeScore(rows: JudgeCriterionRow[]): {
+/** Average of each judge's weighted overall total (0–100 criterion scores × settings weights). */
+function averageOverallJudgeScore(
+  rows: JudgeCriterionRow[],
+  weights: ReturnType<typeof parseCriterionWeights>,
+): {
   avg: number | null;
   judgeCount: number;
 } {
   const totals = rows
-    .map((row) => totalScore(row as JudgeScoreRow))
+    .map((row) => totalScore(row as JudgeScoreRow, weights))
     .filter((value): value is number => typeof value === "number");
   if (totals.length === 0) return { avg: null, judgeCount: 0 };
   const sum = totals.reduce((acc, n) => acc + n, 0);
@@ -77,24 +86,8 @@ function averageOverallJudgeScore(rows: JudgeCriterionRow[]): {
   };
 }
 
-function parseMax(value: number | null | undefined, fallback: number): number {
-  return Math.max(0, Math.round(typeof value === "number" ? value : fallback));
-}
-
 function buildMaxima(settings: SettingsMaxima | null) {
-  const technical = parseMax(settings?.technical_execution_value, 20);
-  const problem = parseMax(settings?.problem_solution_fit_value, 20);
-  const innovation = parseMax(settings?.innovation_creativity_value, 30);
-  const presentation = parseMax(settings?.presentation_quality_value, 20);
-  const entrepreneurship = parseMax(settings?.entrepreneurship_value, 10);
-  return {
-    technical,
-    problem,
-    innovation,
-    presentation,
-    entrepreneurship,
-    overall: technical + problem + innovation + presentation + entrepreneurship,
-  };
+  return criterionDisplayMaxima(parseCriterionWeights(settings, DEFAULT_CRITERION_WEIGHTS));
 }
 
 export async function GET(request: NextRequest) {
@@ -146,6 +139,7 @@ export async function GET(request: NextRequest) {
 
   const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
   const judgeRows = (scoresResult.data ?? []) as JudgeCriterionRow[];
+  const weights = parseCriterionWeights(settingsResult.data, DEFAULT_CRITERION_WEIGHTS);
 
   const judgeRowsBySubmission = new Map<string, JudgeCriterionRow[]>();
   for (const row of judgeRows) {
@@ -167,7 +161,7 @@ export async function GET(request: NextRequest) {
   };
 
   const scoredForRanking = submissions.map((row) => {
-    const { avg } = averageOverallJudgeScore(judgeRowsBySubmission.get(row.id) ?? []);
+    const { avg } = averageOverallJudgeScore(judgeRowsBySubmission.get(row.id) ?? [], weights);
     return {
       id: row.id,
       track: row.track?.trim() || "Open Innovation",
@@ -180,7 +174,7 @@ export async function GET(request: NextRequest) {
   const projects: ProjectRow[] = submissions
     .map((row) => {
       const rows = judgeRowsBySubmission.get(row.id) ?? [];
-      const { avg, judgeCount } = averageOverallJudgeScore(rows);
+      const { avg, judgeCount } = averageOverallJudgeScore(rows, weights);
       return {
         id: row.id,
         projectName: row.project_name,
@@ -207,6 +201,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     projects,
     maxima: buildMaxima(settingsResult.data ?? null),
+    // Kept for callers that want rubric weights (not input maxima).
+    weights,
+    criterionScoreMax: CRITERION_SCORE_MAX,
     session: {
       username: auth.session.username,
       role: auth.session.role,

@@ -12,6 +12,7 @@ import {
   SHADOW,
   SHADOW_DARK,
 } from "../dashboard/constants";
+import { CRITERION_SCORE_MAX, criterionDisplayMaxima } from "@/lib/scoring";
 
 type CriterionAverages = {
   technical: number | null;
@@ -48,14 +49,7 @@ type JudgeScoresResponse = {
   error?: string;
 };
 
-const DEFAULT_MAXIMA: ScoreMaxima = {
-  technical: 20,
-  problem: 20,
-  innovation: 30,
-  presentation: 20,
-  entrepreneurship: 10,
-  overall: 100,
-};
+const DEFAULT_MAXIMA: ScoreMaxima = criterionDisplayMaxima();
 
 function fmtAvg(value: number | null, max: number): string {
   return value != null ? `${value}/${max}` : "—";
@@ -222,17 +216,11 @@ export default function SponsorJudgeScoresClient() {
       );
       const m = payload.maxima;
       setMaxima({
-        technical:
-          typeof m?.technical === "number" ? m.technical : DEFAULT_MAXIMA.technical,
-        problem: typeof m?.problem === "number" ? m.problem : DEFAULT_MAXIMA.problem,
-        innovation:
-          typeof m?.innovation === "number" ? m.innovation : DEFAULT_MAXIMA.innovation,
-        presentation:
-          typeof m?.presentation === "number" ? m.presentation : DEFAULT_MAXIMA.presentation,
-        entrepreneurship:
-          typeof m?.entrepreneurship === "number"
-            ? m.entrepreneurship
-            : DEFAULT_MAXIMA.entrepreneurship,
+        technical: CRITERION_SCORE_MAX,
+        problem: CRITERION_SCORE_MAX,
+        innovation: CRITERION_SCORE_MAX,
+        presentation: CRITERION_SCORE_MAX,
+        entrepreneurship: CRITERION_SCORE_MAX,
         overall: typeof m?.overall === "number" && m.overall > 0 ? m.overall : DEFAULT_MAXIMA.overall,
       });
       if (typeof payload.session?.username === "string" && payload.session.username) {

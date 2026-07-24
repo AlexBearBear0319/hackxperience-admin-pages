@@ -1,6 +1,7 @@
 "use client";
 
 import type { AdminSubmission, SubmissionScore } from "@/lib/types";
+import { criterionDisplayMaxima } from "@/lib/scoring";
 
 type WriteXlsxFile = typeof import("write-excel-file/browser").default;
 type ExcelFileContent = Blob | File | ArrayBuffer;
@@ -57,9 +58,8 @@ function scoredJudges(sub: AdminSubmission): ScoredJudge[] {
 }
 
 /**
- * Final score = average of each judge's total. A judge's total is the sum of
- * the four criteria, which are each capped at their weight (30/25/25/20), so
- * the total is already on a 0–100 scale. Just round to 2 decimals.
+ * Final score = average of each judge's weighted total. A judge's total is
+ * Σ (criterionScore / 100 × weight), so it is already on a 0–overall scale.
  */
 function finalPercent(sub: AdminSubmission): number | null {
   const valid = scoredJudges(sub);
@@ -107,14 +107,7 @@ type Maxima = {
   overall: number;
 };
 
-const DEFAULT_EXPORT_MAXIMA: Maxima = {
-  technical: 20,
-  problem: 20,
-  innovation: 30,
-  presentation: 20,
-  entrepreneurship: 10,
-  overall: 100,
-};
+const DEFAULT_EXPORT_MAXIMA: Maxima = criterionDisplayMaxima();
 
 /**
  * Returns a valid Excel sheet name (≤31 chars, no \ / ? * [ ] :).

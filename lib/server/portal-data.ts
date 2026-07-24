@@ -9,6 +9,14 @@ import type {
   SubmissionRow,
   TeamMember,
 } from "@/lib/types";
+import {
+  DEFAULT_CRITERION_WEIGHTS,
+  weightedCriterionTotal,
+  type CriterionWeights,
+} from "@/lib/scoring";
+
+export type { CriterionWeights };
+export { DEFAULT_CRITERION_WEIGHTS };
 
 export type JudgeIdentifier = number | string;
 
@@ -115,21 +123,11 @@ export function mapUiStatusToDb(status: SubmissionStatus): DbSubmissionStatus {
   return statusToDb[status];
 }
 
-export function totalScore(score: JudgeScoreRow | undefined) {
-  if (!score) return null;
-
-  const fields = [
-    score.technical_execution,
-    score.problem_solution_fit,
-    score.innovation_creativity,
-    score.presentation_quality,
-    score.entrepreneurship,
-  ];
-
-  const hasAny = fields.some((value) => typeof value === "number");
-  if (!hasAny) return null;
-
-  return fields.reduce<number>((sum, value) => sum + (typeof value === "number" ? value : 0), 0);
+export function totalScore(
+  score: JudgeScoreRow | undefined,
+  weights: CriterionWeights = DEFAULT_CRITERION_WEIGHTS,
+) {
+  return weightedCriterionTotal(score, weights);
 }
 
 export function mapSubmissionToAdminView(

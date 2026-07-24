@@ -87,7 +87,7 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
   const activeCriteria = criteria ?? CRITERIA;
   const anyInvalid = activeCriteria.some(c => isFieldInvalid(score[c.key as CriterionKey], c.max));
   const liveTotal  = calcLiveTotal(score, activeCriteria);
-  const maxTotal   = activeCriteria.reduce((s, c) => s + c.max, 0);
+  const maxTotal   = activeCriteria.reduce((s, c) => s + c.weight, 0);
 
   function step(key: string, max: number, delta: number) {
     const current = parseInt(score[key as CriterionKey]) || 0;
@@ -142,13 +142,14 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
                   style={{ fontFamily: FM, fontSize: 12, color: C.textPrimary, letterSpacing: "0.02em", fontWeight: 700 }}
                 >
                   {c.label}
+                  <span style={{ color: C.textMuted, fontWeight: 500 }}> · {c.weight}%</span>
                 </div>
                 <div className="r-score-desc" style={{ fontFamily: FM, fontSize: 10, color: C.textMuted, marginTop: 2, lineHeight: 1.4 }}>
                   {subtitle}
                 </div>
                 {invalid && (
                   <div style={{ fontFamily: FM, fontSize: 10, color: C.primary, marginTop: 2, lineHeight: 1.4 }}>
-                    Please input the current criteria within {c.max}
+                    Enter an integer from 0 to {c.max}
                   </div>
                 )}
               </div>
@@ -183,7 +184,7 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
                     onChange(c.key, e.target.value);
                   }}
                   style={{
-                    width: 38, height: 26,
+                    width: 44, height: 26,
                     fontFamily: FM, fontSize: 15, fontWeight: 700,
                     color: invalid ? C.primary : C.textPrimary,
                     background: "transparent",
