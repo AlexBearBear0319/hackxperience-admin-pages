@@ -12,7 +12,6 @@ import {
   SHADOW,
   SHADOW_DARK,
 } from "../dashboard/constants";
-import { CRITERION_SCORE_MAX, criterionDisplayMaxima } from "@/lib/scoring";
 
 type CriterionAverages = {
   technical: number | null;
@@ -20,15 +19,6 @@ type CriterionAverages = {
   innovation: number | null;
   presentation: number | null;
   entrepreneurship: number | null;
-};
-
-type ScoreMaxima = {
-  technical: number;
-  problem: number;
-  innovation: number;
-  presentation: number;
-  entrepreneurship: number;
-  overall: number;
 };
 
 type JudgeScoreProject = {
@@ -44,15 +34,12 @@ type JudgeScoreProject = {
 
 type JudgeScoresResponse = {
   projects: JudgeScoreProject[];
-  maxima: ScoreMaxima;
   session: { username: string; role: string };
   error?: string;
 };
 
-const DEFAULT_MAXIMA: ScoreMaxima = criterionDisplayMaxima();
-
-function fmtAvg(value: number | null, max: number): string {
-  return value != null ? `${value}/${max}` : "—";
+function fmtAvg(value: number | null): string {
+  return value != null ? String(value) : "—";
 }
 
 function normalizeCriteria(raw: unknown): CriterionAverages {
@@ -94,10 +81,18 @@ const PAGE_CSS = `
   .sp-logout-btn:hover { background: #CC0000; color: #fef9f1; border-color: #CC0000; }
   .sp-hamburger { transition: border-color 0.15s, color 0.15s, background 0.15s; }
   .sp-hamburger:hover { border-color: #CC0000; color: #CC0000; background: rgba(204,0,0,0.07); }
-  .sp-input:focus {
+  .sp-input:focus,
+  .sp-select:focus {
     outline: none;
     border-color: #CC0000 !important;
     box-shadow: 3px 3px 0 0 #CC0000;
+  }
+  .sp-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231d1c17' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px !important;
   }
   .sp-menu-link { transition: background 0.15s, color 0.15s, border-color 0.15s; }
   .sp-menu-link:hover { border-color: #CC0000; color: #CC0000; background: rgba(204,0,0,0.06); }
@@ -106,6 +101,14 @@ const PAGE_CSS = `
     .sp-scores-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .sp-scores-table { min-width: 980px; }
     .sp-scores-body { padding: 14px !important; }
+    .sp-scores-filters {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .sp-scores-filters .sp-select {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
   }
 `;
 
@@ -182,12 +185,17 @@ function TrackPlaceMark({ place }: { place: 1 | 2 }) {
 export default function SponsorJudgeScoresClient() {
   const router = useRouter();
   const [projects, setProjects] = useState<JudgeScoreProject[]>([]);
-  const [maxima, setMaxima] = useState<ScoreMaxima>(DEFAULT_MAXIMA);
   const [sessionUser, setSessionUser] = useState("sponsor");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTrack, setActiveTrack] = useState("ALL");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const tracks = useMemo(
+    () => ["ALL", ...Array.from(new Set(projects.map((p) => p.track).filter(Boolean))).sort()],
+    [projects],
+  );
 
   const loadScores = useCallback(async () => {
     setLoading(true);
@@ -214,15 +222,6 @@ export default function SponsorJudgeScoresClient() {
             project.trackPlace === 1 || project.trackPlace === 2 ? project.trackPlace : null,
         })),
       );
-      const m = payload.maxima;
-      setMaxima({
-        technical: CRITERION_SCORE_MAX,
-        problem: CRITERION_SCORE_MAX,
-        innovation: CRITERION_SCORE_MAX,
-        presentation: CRITERION_SCORE_MAX,
-        entrepreneurship: CRITERION_SCORE_MAX,
-        overall: typeof m?.overall === "number" && m.overall > 0 ? m.overall : DEFAULT_MAXIMA.overall,
-      });
       if (typeof payload.session?.username === "string" && payload.session.username) {
         setSessionUser(payload.session.username);
       }
@@ -247,15 +246,18 @@ export default function SponsorJudgeScoresClient() {
   }, [router]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return projects;
-    const q = searchQuery.trim().toLowerCase();
-    return projects.filter(
-      (p) =>
-        p.projectName.toLowerCase().includes(q) ||
-        p.teamId.toLowerCase().includes(q) ||
-        p.track.toLowerCase().includes(q),
-    );
-  }, [projects, searchQuery]);
+    let list = activeTrack === "ALL" ? projects : projects.filter((p) => p.track === activeTrack);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.projectName.toLowerCase().includes(q) ||
+          p.teamId.toLowerCase().includes(q) ||
+          p.track.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [projects, searchQuery, activeTrack]);
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: FM }}>
@@ -474,7 +476,7 @@ export default function SponsorJudgeScoresClient() {
             JUDGE SCORES
           </h1>
           <p style={{ fontFamily: FM, fontSize: 12, color: C.muted, margin: "8px 0 0", letterSpacing: "0.04em" }}>
-            // CRITERION AVERAGES + OVERALL (OUT OF {maxima.overall})
+            // CRITERION AVERAGES + OVERALL
           </p>
         </div>
 
@@ -486,41 +488,81 @@ export default function SponsorJudgeScoresClient() {
             padding: 16,
           }}
         >
-          <div style={{ position: "relative", marginBottom: 14 }}>
-            <Search
-              size={16}
-              aria-hidden
+          <div
+            className="sp-scores-filters"
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              marginBottom: 14,
+            }}
+          >
+            <div style={{ position: "relative", flex: "1 1 auto", minWidth: 0 }}>
+              <Search
+                size={16}
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: C.muted,
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                className="sp-input"
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="// SEARCH PROJECTS…"
+                aria-label="Search projects"
+                style={{
+                  width: "100%",
+                  minHeight: 44,
+                  padding: "0 12px 0 38px",
+                  borderRadius: 0,
+                  border: `2px solid ${C.borderStrong}`,
+                  background: C.white,
+                  fontFamily: FM,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                  color: C.text,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            <select
+              className="sp-select"
+              value={activeTrack}
+              onChange={(e) => setActiveTrack(e.target.value)}
+              aria-label="Filter by track"
               style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: C.muted,
-                pointerEvents: "none",
-              }}
-            />
-            <input
-              className="sp-input"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="// SEARCH PROJECTS…"
-              aria-label="Search projects"
-              style={{
-                width: "100%",
+                flex: "0 0 auto",
+                minWidth: 200,
                 minHeight: 44,
-                padding: "0 12px 0 38px",
+                padding: "0 36px 0 12px",
                 borderRadius: 0,
                 border: `2px solid ${C.borderStrong}`,
                 background: C.white,
                 fontFamily: FM,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: "0.04em",
+                textTransform: "uppercase",
                 color: C.text,
+                cursor: "pointer",
                 boxSizing: "border-box",
               }}
-            />
+            >
+              {tracks.map((track) => (
+                <option key={track} value={track}>
+                  {track === "ALL" ? "ALL TRACKS" : track}
+                </option>
+              ))}
+            </select>
           </div>
 
           {loadError && (
@@ -582,22 +624,22 @@ export default function SponsorJudgeScoresClient() {
                         <TrackPill track={project.track} />
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.technical, maxima.technical)}
+                        {fmtAvg(project.criteria.technical)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.problem, maxima.problem)}
+                        {fmtAvg(project.criteria.problem)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.innovation, maxima.innovation)}
+                        {fmtAvg(project.criteria.innovation)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.presentation, maxima.presentation)}
+                        {fmtAvg(project.criteria.presentation)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 12 }}>
-                        {fmtAvg(project.criteria.entrepreneurship, maxima.entrepreneurship)}
+                        {fmtAvg(project.criteria.entrepreneurship)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, fontSize: 14 }}>
-                        {fmtAvg(project.overallJudgeAvg, maxima.overall)}
+                        {fmtAvg(project.overallJudgeAvg)}
                       </td>
                       <td className="sp-scores-num" style={{ fontWeight: 700, color: C.muted }}>
                         {project.judgeCount > 0 ? project.judgeCount : "—"}

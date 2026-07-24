@@ -1096,13 +1096,13 @@ export default function SponsorDashboardClient() {
                       <div>
                         <span style={{ color: C.muted }}>// OVERALL {judgeLabel(award).toUpperCase()}: </span>
                         <strong style={{ fontSize: 13 }}>
-                          {project.judgeAvg != null ? project.judgeAvg : "—"}/100
+                          {project.judgeAvg != null ? project.judgeAvg : "—"}
                         </strong>
                       </div>
                       <div>
                         <span style={{ color: C.muted }}>// YOUR {judgeLabel(award).toUpperCase()}: </span>
                         <strong style={{ fontSize: 13 }}>
-                          {project.sponsorScore != null ? project.sponsorScore : "—"}/100
+                          {project.sponsorScore != null ? project.sponsorScore : "—"}
                         </strong>
                       </div>
                     </div>
