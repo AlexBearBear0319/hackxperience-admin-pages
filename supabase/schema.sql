@@ -141,6 +141,12 @@ ALTER TABLE judges_scores
 ALTER TABLE settings
   ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 10;
 
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS judging_bands jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS judging_bands_version smallint NOT NULL DEFAULT 1;
+
 CREATE TABLE IF NOT EXISTS sponsor_scores (
   sponsor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   submission_id uuid NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,

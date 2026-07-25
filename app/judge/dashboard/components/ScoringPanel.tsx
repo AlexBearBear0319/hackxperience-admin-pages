@@ -1,10 +1,17 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { C, FM, FB, SPRING } from "../constants";
 import { CRITERIA, isFieldInvalid, calcLiveTotal, type CriterionKey, type ScoringCriterion } from "../scoring";
 import type { ScoreEntry } from "../types";
+import {
+  bandForScore,
+  formatBandRange,
+  type JudgingBandsMap,
+  type ScoreBand,
+} from "@/lib/judging-bands";
 
 // Subtitles for each criterion matching the design
 const CRITERION_SUBTITLES: Record<string, string> = {
@@ -17,11 +24,14 @@ const CRITERION_SUBTITLES: Record<string, string> = {
 
 function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: string }) {
   return (
-    <div style={{
-      width: 36, height: 36, background: color, borderRadius: 0,
-      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      color: C.white,
-    }}>
+    <div
+      className="r-criterion-icon"
+      style={{
+        width: 36, height: 36, background: color, borderRadius: 0,
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        color: C.white,
+      }}
+    >
       {criteriaKey === "techExec" && (
         <span style={{ fontFamily: "var(--font-ibm-plex-mono), monospace", fontSize: 13, fontWeight: 700 }}>&lt;/&gt;</span>
       )}
@@ -33,12 +43,9 @@ function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: str
       )}
       {criteriaKey === "innovation" && (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {/* Bulb body */}
           <path d="M9 18h6" />
           <path d="M10 21h4" />
-          {/* Bulb */}
           <path d="M15.5 15c.5-1.5 1.5-2.5 1.5-4a5 5 0 0 0-10 0c0 1.5 1 2.5 1.5 4h7z" />
-          {/* Bright effect */}
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="4.5" y1="4.5" x2="6" y2="6" />
           <line x1="19.5" y1="4.5" x2="18" y2="6" />
@@ -48,25 +55,19 @@ function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: str
       )}
       {criteriaKey === "presentation" && (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {/* Screen Frame */}
           <rect x="3" y="3" width="18" height="12" rx="1" />
-          {/* Slide Content: Mini image box on the left, bullet text lines on the right */}
           <rect x="5.5" y="5.5" width="4.5" height="4.5" rx="0.5" />
           <line x1="12" y1="6.5" x2="18.5" y2="6.5" />
           <line x1="12" y1="9.5" x2="16.5" y2="9.5" />
-          {/* Tripod Legs */}
           <path d="M12 15v3" />
           <path d="M8 21l4-3 4 3" />
         </svg>
       )}
       {criteriaKey === "entrepreneurship" && (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          {/* Plant pot */}
           <path d="M6 14h12l-1.2 6.5H7.2L6 14z" />
           <path d="M5 10.5h14v3.5H5v-3.5z" />
-          {/* Central stem */}
           <path d="M12 10.5V5" />
-          {/* Left and right leaves (scaled up slightly) */}
           <path d="M12 7.5C9.5 7.5 7 5.5 7 2.5c3 0 5 2 5 5z" />
           <path d="M12 7.5c2.5 0 5-2 5-5-3 0-5 2-5 5z" />
         </svg>
@@ -75,19 +76,61 @@ function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: str
   );
 }
 
-const ICON_COLORS = [C.primary, C.primary, C.primary, C.primary];
+const ICON_COLORS = [C.primary, C.primary, C.primary, C.primary, C.primary];
 
-export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _projectId }: {
+function BandList({ bands }: { bands: ScoreBand[] }) {
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: "10px 12px",
+        border: `1.5px solid ${C.borderLight}`,
+        background: C.bgPrimary,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div style={{ fontFamily: FM, fontSize: 10, color: C.primary, letterSpacing: "0.08em", fontWeight: 700 }}>
+        // WHAT THIS SCORE MEANS
+      </div>
+      {bands.map((band) => (
+        <div key={`${band.min}-${band.max}`} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <span
+            style={{
+              flex: "0 0 auto",
+              minWidth: 52,
+              fontFamily: FM,
+              fontSize: 11,
+              fontWeight: 700,
+              color: C.primary,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {formatBandRange(band)}
+          </span>
+          <span style={{ fontFamily: FM, fontSize: 11, color: C.textMuted, lineHeight: 1.45 }}>
+            {band.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _projectId, bands }: {
   score: ScoreEntry;
   onChange: (field: string, value: string) => void;
   onSave: () => void;
   criteria?: readonly ScoringCriterion[];
   projectId?: string;
+  bands?: JudgingBandsMap | null;
 }) {
   const activeCriteria = criteria ?? CRITERIA;
   const anyInvalid = activeCriteria.some(c => isFieldInvalid(score[c.key as CriterionKey], c.max));
   const liveTotal  = calcLiveTotal(score, activeCriteria);
   const maxTotal   = activeCriteria.reduce((s, c) => s + c.weight, 0);
+  const [expandedKey, setExpandedKey] = useState<CriterionKey | null>(null);
 
   function step(key: string, max: number, delta: number) {
     const current = parseInt(score[key as CriterionKey]) || 0;
@@ -108,112 +151,194 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
       <style>{`
         .portal-ta::placeholder { color: ${C.textMuted}; font-family: var(--font-ibm-plex-mono), monospace; font-size: 12px; opacity: 1; }
         .portal-ta:focus { border-color: ${C.primary} !important; outline: none; }
-        .r-stepper-btn { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+        .r-stepper-btn { transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s; }
         .r-stepper-btn:hover { background: ${C.primary} !important; color: ${C.white} !important; border-color: ${C.primary} !important; }
         .r-stepper-btn:active { transform: scale(0.92); }
         .r-score-input::-webkit-inner-spin-button,
         .r-score-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .r-score-input { -moz-appearance: textfield; }
-        .r-score-input:focus { border-color: ${C.primary} !important; outline: none; }
+        .r-score-input { -moz-appearance: textfield; transition: border-color 0.15s, box-shadow 0.15s; }
+        .r-score-input:focus { border-color: ${C.primary} !important; outline: none; box-shadow: 2px 2px 0 0 ${C.primary}; }
+        .r-score-row {
+          margin: 0 -10px;
+          padding: 13px 10px !important;
+          border-radius: 0;
+          transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+          cursor: default;
+        }
+        .r-criterion-icon {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .r-score-row:hover {
+          background: rgba(204, 0, 0, 0.06);
+          transform: translateX(2px);
+        }
+        .r-score-row:hover .r-criterion-icon {
+          transform: translate(-2px, -2px);
+          box-shadow: 3px 3px 0 0 ${C.textPrimary};
+        }
+        .r-score-row:hover .r-stepper-label {
+          color: ${C.primary};
+        }
+        .r-band-toggle {
+          transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .r-band-toggle:hover {
+          background: ${C.primary} !important;
+          color: ${C.white} !important;
+          border-color: ${C.primary} !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .r-score-row,
+          .r-criterion-icon,
+          .r-stepper-btn,
+          .r-score-input { transition: none !important; }
+          .r-score-row:hover { transform: none; }
+          .r-score-row:hover .r-criterion-icon { transform: none; }
+        }
       `}</style>
 
       {/* Scoring rows */}
-      <div style={{ flex: 1, padding: "0 16px" }}>
+      <div style={{ flex: 1, padding: "0 16px", overflowY: "auto" }}>
         {activeCriteria.map((c, i) => {
-          const val      = parseInt(score[c.key as CriterionKey]) || 0;
-          const invalid  = isFieldInvalid(score[c.key as CriterionKey], c.max);
+          const rawValue = score[c.key as CriterionKey];
+          const parsed   = parseInt(rawValue, 10);
+          const invalid  = isFieldInvalid(rawValue, c.max);
           const subtitle = CRITERION_SUBTITLES[c.key] ?? "";
+          const criterionBands = bands?.[c.key as CriterionKey];
+          const activeBand = !invalid && Number.isFinite(parsed)
+            ? bandForScore(criterionBands, parsed)
+            : null;
+          const isExpanded = expandedKey === c.key;
+          const hasBands = Boolean(criterionBands && criterionBands.length > 0);
 
           return (
             <div
               key={c.key}
-              className="r-score-row"
               style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "13px 0",
                 borderBottom: i < activeCriteria.length - 1 ? `1px solid ${C.borderLight}` : "none",
               }}
             >
-              <CriterionIcon color={ICON_COLORS[i] ?? C.primary} criteriaKey={c.key} />
+              <div
+                className="r-score-row"
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "13px 0",
+                }}
+              >
+                <CriterionIcon color={ICON_COLORS[i] ?? C.primary} criteriaKey={c.key} />
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  className="r-stepper-label"
-                  style={{ fontFamily: FM, fontSize: 12, color: C.textPrimary, letterSpacing: "0.02em", fontWeight: 700 }}
-                >
-                  {c.label}
-                  <span style={{ color: C.textMuted, fontWeight: 500 }}> · {c.weight}%</span>
-                </div>
-                <div className="r-score-desc" style={{ fontFamily: FM, fontSize: 10, color: C.textMuted, marginTop: 2, lineHeight: 1.4 }}>
-                  {subtitle}
-                </div>
-                {invalid && (
-                  <div style={{ fontFamily: FM, fontSize: 10, color: C.primary, marginTop: 2, lineHeight: 1.4 }}>
-                    Enter an integer from 0 to {c.max}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    className="r-stepper-label"
+                    style={{ fontFamily: FM, fontSize: 12, color: C.textPrimary, letterSpacing: "0.02em", fontWeight: 700 }}
+                  >
+                    {c.label}
+                    <span style={{ color: C.textMuted, fontWeight: 500 }}> · {c.weight}%</span>
                   </div>
-                )}
+                  <div className="r-score-desc" style={{ fontFamily: FM, fontSize: 10, color: C.textMuted, marginTop: 2, lineHeight: 1.4 }}>
+                    {subtitle}
+                  </div>
+                  {invalid && (
+                    <div style={{ fontFamily: FM, fontSize: 10, color: C.primary, marginTop: 2, lineHeight: 1.4 }}>
+                      Enter an integer from 0 to {c.max}
+                    </div>
+                  )}
+                  {activeBand && (
+                    <div style={{ fontFamily: FM, fontSize: 10, color: C.primary, marginTop: 4, lineHeight: 1.45 }}>
+                      <span style={{ fontWeight: 700 }}>{formatBandRange(activeBand)}</span>
+                      {" · "}
+                      {activeBand.label}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stepper */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  {hasBands && (
+                    <button
+                      type="button"
+                      className="r-band-toggle"
+                      onClick={() => setExpandedKey(isExpanded ? null : (c.key as CriterionKey))}
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? "Hide" : "Show"} score bands for ${c.label}`}
+                      style={{
+                        width: 26, height: 26,
+                        background: isExpanded ? C.primary : "transparent",
+                        border: `1px solid ${isExpanded ? C.primary : C.borderMedium}`,
+                        color: isExpanded ? C.white : C.textMuted,
+                        fontFamily: FM, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: 0, lineHeight: 1,
+                      }}
+                    >
+                      ?
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="r-stepper-btn"
+                    onClick={() => step(c.key, c.max, -1)}
+                    style={{
+                      width: 26, height: 26,
+                      background: "transparent",
+                      border: `1px solid ${C.borderMedium}`,
+                      color: C.textMuted,
+                      fontFamily: FM, fontSize: 16, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: 0, lineHeight: 1,
+                    }}
+                    aria-label={`Decrease ${c.label}`}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    className="r-score-input"
+                    value={rawValue}
+                    min={0}
+                    max={c.max}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      onChange(c.key, e.target.value);
+                    }}
+                    style={{
+                      width: 44, height: 26,
+                      fontFamily: FM, fontSize: 15, fontWeight: 700,
+                      color: invalid ? C.primary : C.textPrimary,
+                      background: "transparent",
+                      border: `1px solid ${invalid ? C.primary : C.borderMedium}`,
+                      textAlign: "center",
+                      padding: 0,
+                      transition: "border-color 0.15s",
+                    }}
+                    aria-label={`${c.label} score`}
+                  />
+                  <button
+                    type="button"
+                    className="r-stepper-btn"
+                    onClick={() => step(c.key, c.max, +1)}
+                    style={{
+                      width: 26, height: 26,
+                      background: "transparent",
+                      border: `1px solid ${C.borderMedium}`,
+                      color: C.textMuted,
+                      fontFamily: FM, fontSize: 16, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: 0, lineHeight: 1,
+                    }}
+                    aria-label={`Increase ${c.label}`}
+                  >
+                    +
+                  </button>
+                  <span style={{ fontFamily: FM, fontSize: 11, color: C.textMuted, minWidth: 28 }}>/ {c.max}</span>
+                </div>
               </div>
 
-              {/* Stepper */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                <button
-                  type="button"
-                  className="r-stepper-btn"
-                  onClick={() => step(c.key, c.max, -1)}
-                  style={{
-                    width: 26, height: 26,
-                    background: "transparent",
-                    border: `1px solid ${C.borderMedium}`,
-                    color: C.textMuted,
-                    fontFamily: FM, fontSize: 16, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    padding: 0, lineHeight: 1,
-                  }}
-                  aria-label={`Decrease ${c.label}`}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  className="r-score-input"
-                  value={score[c.key as CriterionKey]}
-                  min={0}
-                  max={c.max}
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => {
-                    onChange(c.key, e.target.value);
-                  }}
-                  style={{
-                    width: 44, height: 26,
-                    fontFamily: FM, fontSize: 15, fontWeight: 700,
-                    color: invalid ? C.primary : C.textPrimary,
-                    background: "transparent",
-                    border: `1px solid ${invalid ? C.primary : C.borderMedium}`,
-                    textAlign: "center",
-                    padding: 0,
-                    transition: "border-color 0.15s",
-                  }}
-                  aria-label={`${c.label} score`}
-                />
-                <button
-                  type="button"
-                  className="r-stepper-btn"
-                  onClick={() => step(c.key, c.max, +1)}
-                  style={{
-                    width: 26, height: 26,
-                    background: "transparent",
-                    border: `1px solid ${C.borderMedium}`,
-                    color: C.textMuted,
-                    fontFamily: FM, fontSize: 16, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    padding: 0, lineHeight: 1,
-                  }}
-                  aria-label={`Increase ${c.label}`}
-                >
-                  +
-                </button>
-                <span style={{ fontFamily: FM, fontSize: 11, color: C.textMuted, minWidth: 28 }}>/ {c.max}</span>
-              </div>
+              {isExpanded && criterionBands && (
+                <div style={{ padding: "0 10px 12px" }}>
+                  <BandList bands={criterionBands} />
+                </div>
+              )}
             </div>
           );
         })}
@@ -252,7 +377,6 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
         flexWrap: "wrap", gap: 10,
         borderTop: `1px solid ${C.borderLight}`,
       }}>
-        {/* Left: save / live total */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {score.saved ? (
             <>
@@ -279,7 +403,6 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
           )}
         </div>
 
-        {/* Right: SAVE SCORE */}
         <motion.button
           onClick={onSave}
           disabled={anyInvalid}

@@ -12,6 +12,8 @@ import { PlaceholderThumb } from "./components/atoms";
 import { ScoringPanel } from "./components/ScoringPanel";
 import { OverlayModal } from "./components/OverlayModal";
 import { useSettings } from "@/lib/hooks/use-settings";
+import { loadJudgingBands, peekCachedJudgingBands } from "@/lib/client/judging-bands-cache";
+import type { JudgingBandsMap } from "@/lib/judging-bands";
 
 type JudgeProjectsResponse = {
   projects: JudgeProject[];
@@ -53,6 +55,7 @@ export default function JudgeDashboardClient() {
   const [loading,        setLoading]        = useState(true);
   const [loadError,      setLoadError]      = useState("");
   const [searchQuery,    setSearchQuery]    = useState("");
+  const [judgingBands,   setJudgingBands]   = useState<JudgingBandsMap | null>(() => peekCachedJudgingBands());
 
   const scoringCriteria = useMemo<readonly ScoringCriterion[]>(
     () => [
@@ -154,6 +157,20 @@ export default function JudgeDashboardClient() {
   useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadJudgingBands()
+      .then((payload) => {
+        if (!cancelled) setJudgingBands(payload.bands);
+      })
+      .catch(() => {
+        // Scoring still works without bands; keep any cache already shown.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setSubmissionOpen(settings.submission_status);
@@ -789,6 +806,7 @@ export default function JudgeDashboardClient() {
                       onSave={() => saveScore(expandedProject.id)}
                       criteria={scoringCriteria}
                       projectId={expandedProject.id}
+                      bands={judgingBands}
                     />
                   </div>
                 </div>
