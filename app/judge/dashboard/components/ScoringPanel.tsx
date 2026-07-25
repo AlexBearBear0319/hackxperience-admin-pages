@@ -17,11 +17,14 @@ const CRITERION_SUBTITLES: Record<string, string> = {
 
 function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: string }) {
   return (
-    <div style={{
-      width: 36, height: 36, background: color, borderRadius: 0,
-      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      color: C.white,
-    }}>
+    <div
+      className="r-criterion-icon"
+      style={{
+        width: 36, height: 36, background: color, borderRadius: 0,
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        color: C.white,
+      }}
+    >
       {criteriaKey === "techExec" && (
         <span style={{ fontFamily: "var(--font-ibm-plex-mono), monospace", fontSize: 13, fontWeight: 700 }}>&lt;/&gt;</span>
       )}
@@ -108,13 +111,42 @@ export function ScoringPanel({ score, onChange, onSave, criteria, projectId: _pr
       <style>{`
         .portal-ta::placeholder { color: ${C.textMuted}; font-family: var(--font-ibm-plex-mono), monospace; font-size: 12px; opacity: 1; }
         .portal-ta:focus { border-color: ${C.primary} !important; outline: none; }
-        .r-stepper-btn { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+        .r-stepper-btn { transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s; }
         .r-stepper-btn:hover { background: ${C.primary} !important; color: ${C.white} !important; border-color: ${C.primary} !important; }
         .r-stepper-btn:active { transform: scale(0.92); }
         .r-score-input::-webkit-inner-spin-button,
         .r-score-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .r-score-input { -moz-appearance: textfield; }
-        .r-score-input:focus { border-color: ${C.primary} !important; outline: none; }
+        .r-score-input { -moz-appearance: textfield; transition: border-color 0.15s, box-shadow 0.15s; }
+        .r-score-input:focus { border-color: ${C.primary} !important; outline: none; box-shadow: 2px 2px 0 0 ${C.primary}; }
+        .r-score-row {
+          margin: 0 -10px;
+          padding: 13px 10px !important;
+          border-radius: 0;
+          transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+          cursor: default;
+        }
+        .r-criterion-icon {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .r-score-row:hover {
+          background: rgba(204, 0, 0, 0.06);
+          transform: translateX(2px);
+        }
+        .r-score-row:hover .r-criterion-icon {
+          transform: translate(-2px, -2px);
+          box-shadow: 3px 3px 0 0 ${C.textPrimary};
+        }
+        .r-score-row:hover .r-stepper-label {
+          color: ${C.primary};
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .r-score-row,
+          .r-criterion-icon,
+          .r-stepper-btn,
+          .r-score-input { transition: none !important; }
+          .r-score-row:hover { transform: none; }
+          .r-score-row:hover .r-criterion-icon { transform: none; }
+        }
       `}</style>
 
       {/* Scoring rows */}
