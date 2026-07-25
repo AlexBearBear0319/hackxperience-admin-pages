@@ -753,9 +753,9 @@ function JudgeAccountsPanel({
 const DEFAULT_TEAM_SIZE = 5;
 const DEFAULT_FILE_SIZE_MB = 10;
 const DEFAULT_JUDGING: Record<Criterion["key"], number> = {
+  innovation_creativity_value: 30,
   technical_execution_value: 20,
   problem_solution_fit_value: 20,
-  innovation_creativity_value: 30,
   presentation_quality_value: 20,
   entrepreneurship_value: 10
 };
@@ -853,9 +853,9 @@ export default function SettingsClient() {
   }, []);
 
   const criteria = useMemo<Criterion[]>(() => [
+    { key: "innovation_creativity_value", label: "INNOVATION_CREATIVITY", maxPts: settings?.innovation_creativity_value ?? 30 },
     { key: "technical_execution_value", label: "TECHNICAL_EXECUTION", maxPts: settings?.technical_execution_value ?? 20 },
     { key: "problem_solution_fit_value", label: "PROBLEM_SOLUTION_FIT", maxPts: settings?.problem_solution_fit_value ?? 20 },
-    { key: "innovation_creativity_value", label: "INNOVATION_CREATIVITY", maxPts: settings?.innovation_creativity_value ?? 30 },
     { key: "presentation_quality_value", label: "PRESENTATION_QUALITY", maxPts: settings?.presentation_quality_value ?? 20 },
     { key: "entrepreneurship_value", label: "ENTREPRENEURSHIP", maxPts: settings?.entrepreneurship_value ?? 10 },
   ], [settings]);
