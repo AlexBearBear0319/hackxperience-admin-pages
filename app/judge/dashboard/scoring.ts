@@ -7,9 +7,9 @@ import {
 } from "@/lib/scoring";
 
 export const CRITERIA = [
+  { key: "innovation",       label: "Innovation & Creativity", weight: DEFAULT_CRITERION_WEIGHTS.innovation_creativity, max: CRITERION_SCORE_MAX },
   { key: "techExec",         label: "Technical Execution",     weight: DEFAULT_CRITERION_WEIGHTS.technical_execution,  max: CRITERION_SCORE_MAX },
   { key: "problemSolution",  label: "Problem-Solution Fit",    weight: DEFAULT_CRITERION_WEIGHTS.problem_solution_fit, max: CRITERION_SCORE_MAX },
-  { key: "innovation",       label: "Innovation + Creativity", weight: DEFAULT_CRITERION_WEIGHTS.innovation_creativity, max: CRITERION_SCORE_MAX },
   { key: "presentation",     label: "Presentation Quality",    weight: DEFAULT_CRITERION_WEIGHTS.presentation_quality, max: CRITERION_SCORE_MAX },
   { key: "entrepreneurship", label: "Entrepreneurship",        weight: DEFAULT_CRITERION_WEIGHTS.entrepreneurship,     max: CRITERION_SCORE_MAX },
 ] as const;
